@@ -5,109 +5,6 @@
 
 # #### <br> Visualize the data base
 
-# In[1]:
-from tkinter import *
-from tkinter import ttk
-
-# In[1]:
-from progressbar import widgets
-
-fenetre = Tk()
-
-# fenetre['bg']='white'
-
-# frame 1 -> espèce
-Frame1 = Frame(fenetre, borderwidth=2, relief=GROOVE)
-Frame1.pack(side=TOP, padx=10, pady=10)
-
-# frame 2 -> province
-Frame2 = Frame(fenetre, borderwidth=2, relief=GROOVE)
-Frame2.pack(side=TOP, padx=10, pady=10)
-
-# frame 3 -> carte
-Frame3 = Frame(fenetre, borderwidth=2, relief=GROOVE)
-Frame3.pack(side=BOTTOM, padx=10, pady=10)
-
-# frame 4 -> curseur années
-Frame4 = Frame(fenetre, borderwidth=2, relief=GROOVE)
-Frame4.pack(side=BOTTOM, padx=10, pady=10)
-
-# Ajout de labels
-Label(Frame1, text="Frame 1").pack(padx=10, pady=10)
-Label(Frame2, text="Frame 2").pack(padx=10, pady=10)
-Label(Frame3, text="Frame 3").pack(padx=100, pady=100)
-Label(Frame4, text="Frame 4").pack(padx=10, pady=10)
-fenetre.mainloop()
-
-
-# In[1]:
-# global province
-# global espece
-
-# In[1]:
-def getEntry():
-    esp = entree1.get()
-    prov = listeCombo.get()
-    print(esp)
-    print(prov)
-
-
-# espece= getEntry()
-# print(getEntry())
-
-
-def callback(selection):
-    province = selection
-    print(province)
-
-
-root = Tk()
-root.geometry("1000x1000")
-w = Label(root, text='StudyTonight', font="80")
-w.pack()
-
-frame = Frame(root)
-frame.pack()
-
-mapframe = Frame(root)
-mapframe.pack(side=TOP)
-
-cursframe = Frame(root)
-cursframe.pack(side=TOP)
-
-# str = StringVar()
-# str.set("Entrée l'espèce")
-entree1 = Entry(frame, textvariable=str, width=30)
-entree1.insert(0, "Entrée l'espèce ici")
-entree1.pack(side=LEFT)
-
-button1 = Button(frame, text="Exécuter", fg="red", command=getEntry)
-button1.pack(side=RIGHT)
-
-provList = ["West Flanders", "Flemish Brabant", "East Flanders", "Namur", "Liège", "Hainaut",
-            "Luxembourg", "Walloon Brabant", "Limburg", "Antwerp", "Brussels Capital Region"]
-
-# variable = StringVar(frame)
-# variable.set('province')
-
-# opt = OptionMenu(frame, variable, *provList)#, command=callback)
-# opt.config(width=90, font=('Helvetica', 12))
-# opt.pack(side=LEFT)
-
-listeCombo = ttk.Combobox(root, values=provList)
-
-listeCombo.current(0)
-listeCombo.pack(side=LEFT)
-
-map = Button(mapframe, text="Block4", fg="orange")
-map.pack(side=BOTTOM)
-
-value = DoubleVar()
-curs = Scale(cursframe, variable=value, orient=HORIZONTAL)
-curs.pack(side=BOTTOM)
-
-root.mainloop()
-
 # In[]:
 import pandas as pd
 import warnings
@@ -153,11 +50,6 @@ met.set_index("prov_code", inplace=True)
 met = met["geometry"]
 prov_code = list(fr["prov_code"])
 
-# In[1]:
-p = met[0]
-center = p.centroid
-loc = np.array(center)
-print(loc)
 # In[1]:
 
 ''' Ce programme peut seulement faire une carte avec les donner fournie par natagora et NatuurPunt
@@ -235,10 +127,6 @@ def makeMap(df, espece, code_prov, annee, groupe, fichier):
     mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=17)  # tiles=basemap,
 
     folium.TileLayer('openstreetmap').add_to(mappy)
-    # folium.TileLayer('MapQuest Open').add_to(mappy)
-    # folium.TileLayer('MapQuest Open Aerial').add_to(mappy)
-    # folium.TileLayer('Mapbox Bright').add_to(mappy)
-    # folium.TileLayer('Mapbox Control Room').add_to(mappy)
     folium.TileLayer('Stamen Terrain').add_to(mappy)
     folium.TileLayer('Stamen Toner').add_to(mappy)
     folium.TileLayer('Stamen Watercolor').add_to(mappy)
@@ -311,10 +199,6 @@ def ok():
 
 button = Button(master, text="OK", command=ok)
 button.grid(row=5, column=0)
-
-# html_label = HTMLLabel(master, html="MA.html")
-# html_label.pack(fill="both", expand=True)
-# html_label.grid(row=6, column=0)
 
 master.mainloop()
 
