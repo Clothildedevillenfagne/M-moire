@@ -5,6 +5,7 @@
 
 # #### <br> Visualize the data base
 
+
 # In[]:
 import pandas as pd
 import warnings
@@ -18,10 +19,6 @@ import numpy as np
 from folium.plugins import MarkerCluster
 import webbrowser
 import os
-from shapely.geometry import Polygon, Point, MultiPolygon
-
-# from tkhtmlview import HTMLLabel
-# from tk_html_widgets import HTMLLabel
 
 warnings.filterwarnings("ignore")
 
@@ -69,10 +66,12 @@ master.title("Outil de visualisation")
 
 # Label(master, text="Choisissez une carte").grid(row=0)
 Label(master, text="Nom de l'espèce").grid(row=0)
-Label(master, text="Province").grid(row=1)
-Label(master, text="Année").grid(row=2)
-Label(master, text="Avec groupement ?").grid(row=3)
-Label(master, text="Nom de la carte enregistée").grid(row=4)
+Label(master, text="Seul le nom sientifique des espèce est attendu").grid(row=0, column=2)
+Label(master, text="Province").grid(row=2)
+Label(master, text="Année").grid(row=3)
+Label(master, text="à").grid(row=3, column=2)
+Label(master, text="Avec groupement ?").grid(row=4)
+Label(master, text="Nom de la carte enregistée").grid(row=5)
 
 # e1 = Entry(master)
 userespece = Entry(master)
@@ -80,14 +79,17 @@ userespece = Entry(master)
 # e1.grid(row=0, column=1)
 userespece.grid(row=0, column=1)
 
-userAnnee = Entry(master)
-userAnnee.grid(row=2, column=1)
+userAnnee1 = Entry(master)
+userAnnee1.grid(row=3, column=1)
+
+userAnnee2 = Entry(master)
+userAnnee2.grid(row=3, column=3)
 
 cb = IntVar()
-Checkbutton(master, variable=cb, onvalue=1, offvalue=0).grid(row=3, column=1)
+Checkbutton(master, variable=cb, onvalue=1, offvalue=0).grid(row=4, column=1)
 
 nomFichier = Entry(master)
-nomFichier.grid(row=4, column=1)
+nomFichier.grid(row=5, column=1)
 
 # var1 = StringVar(master)
 # var1.set(basemaps[8])  # initial value
@@ -99,17 +101,15 @@ var2 = StringVar(master)
 var2.set(provList[0])  # initial value
 
 option2 = OptionMenu(master, var2, *provList)
-option2.grid(row=1, column=1)
-
-#
-# test stuff
-# global lien
-#lien = '<h1 style="color: red; text-align: center"> Hello World </H1>'
+option2.grid(row=2, column=1)
 
 
-def makeMap(df, espece, code_prov, annee, groupe, fichier):
+def makeMap(df, espece, code_prov, annee1,annee2, groupe, fichier):
     df = df[df.species == str(espece)]  # select the species
-    df = df[df.year == int(annee)]
+    min = df['year'] >= int(annee1)
+    df_min = df[min]
+    max = df_min['year'] <= int(annee2)
+    df_final = df_min[max]
 
     for i in range(len(prov_code)):
         if prov_code[i] == code_prov:
@@ -120,9 +120,10 @@ def makeMap(df, espece, code_prov, annee, groupe, fichier):
         else:
             loc = [4.35, 50.8333]
 
-    latitude = df['decimalLatitude'].tolist()
-    longitude = df['decimalLongitude'].tolist()
-    individualCount = df['individualCount'].tolist()
+    latitude = df_final['decimalLatitude'].tolist()
+    longitude = df_final['decimalLongitude'].tolist()
+    individualCount = df_final['individualCount'].tolist()
+    year = df_final['year'].tolist()
 
     mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=17)  # tiles=basemap,
 
@@ -138,12 +139,20 @@ def makeMap(df, espece, code_prov, annee, groupe, fichier):
         marker_cluster = MarkerCluster().add_to(mappy)
 
         for i in range(len(latitude)):
-            folium.Marker([latitude[i], longitude[i]], popup=individualCount[i]).add_to(marker_cluster)
+            folium.Marker([latitude[i], longitude[i]], popup="""
+                  <i>Nombre d'individue compté: </i><b><br>{}</b><br>
+                  <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
+                    round(individualCount[i],2),
+                    round(year[i],2))).add_to(marker_cluster)
 
 
     else:
         for i in range(len(latitude)):
-            folium.Marker([latitude[i], longitude[i]], popup=individualCount[i]).add_to(mappy)
+            folium.Marker([latitude[i], longitude[i]], popup="""
+                  <i>Nombre d'individue compté: </i><b><br>{}</b><br>
+                  <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
+                    round(individualCount[i],2),
+                    round(year[i],2))).add_to(mappy)
 
     folium.LayerControl().add_to(mappy)
     # lien = fichier + '.html'
@@ -159,7 +168,8 @@ def ok():
     # print("Basemap: ", var1.get())
     print("Espèce: ", userespece.get())
     print("Province: ", var2.get())
-    print("Année: ", userAnnee.get())
+    print("Année de début: ", userAnnee1.get())
+    print("Année de fin: ", userAnnee2.get())
     print("Nom de la carte: ", nomFichier.get())
     if cb.get() == 1:
         print("Demande de groupement : OUI")
@@ -168,7 +178,8 @@ def ok():
     # base = var1.get()
     espece = userespece.get()
     province = var2.get()
-    annee = userAnnee.get()
+    annee1 = userAnnee1.get()
+    annee2 = userAnnee2.get()
     groupe = cb.get()
     fichier = nomFichier.get()
     new_df = df[['species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude']].copy()
@@ -194,11 +205,12 @@ def ok():
         code = "10000"
     else:
         code = "00000"
-    makeMap(new_df, espece, code, annee, groupe, fichier)
+    makeMap(new_df, espece, code, annee1, annee2, groupe, fichier)
 
 
 button = Button(master, text="OK", command=ok)
-button.grid(row=5, column=0)
+button.grid(row=6, column=0)
+
 
 master.mainloop()
 
