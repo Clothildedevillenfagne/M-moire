@@ -19,6 +19,9 @@ import numpy as np
 from folium.plugins import MarkerCluster
 import webbrowser
 import os
+from shapely.geometry import Polygon, Point, MultiPolygon
+from shapely.geometry import shape
+import json
 
 warnings.filterwarnings("ignore")
 
@@ -47,6 +50,25 @@ met.set_index("prov_code", inplace=True)
 met = met["geometry"]
 prov_code = list(fr["prov_code"])
 
+
+
+# In[]:
+liste_com = []
+geo = []
+fd = open("communesgemeente-belgium.geojson", "r")
+if fd :
+    data = json.load(fd)
+    for i in range(len(data["features"])):
+        #try:
+        liste_com.append(data["features"][i]["properties"]["arr_code"])
+        #except:
+        #    liste_com.append(data["features"][i]["properties"]["arr_name_nl"])
+
+        geom = shape(data["features"][i]["geometry"])
+        #print(type(geom))
+        geo.append(geom)
+df_geo = pd.DataFrame({'commune': liste_com, 'geometry': geo})
+
 # In[1]:
 
 ''' Ce programme peut seulement faire une carte avec les donner fournie par natagora et NatuurPunt
@@ -59,6 +81,10 @@ basemaps = ["OpenStreetMap", "MapQuest Open", "MapQuest Open Aerial",
             "Mapbox Bright", "Mapbox Control Room", "CartoDB dark_matter",
             "CartoDB positron", "Stamen Terrain", "Stamen Toner",
             "Stamen Watercolor"]
+
+colors = ['red', 'blue', 'gray', 'darkred', 'lightred', 'orange', 'beige', 'green', 'darkgreen',
+          'lightgreen', 'darkblue', 'lightblue', 'purple', 'darkpurple', 'pink', 'cadetblue',
+          'lightgray', 'black']
 
 master = Tk()
 
@@ -91,12 +117,6 @@ Checkbutton(master, variable=cb, onvalue=1, offvalue=0).grid(row=4, column=1)
 nomFichier = Entry(master)
 nomFichier.grid(row=5, column=1)
 
-# var1 = StringVar(master)
-# var1.set(basemaps[8])  # initial value
-
-# option1 = OptionMenu(master, var1, *basemaps)
-# option1.grid(row=0, column=1)
-
 var2 = StringVar(master)
 var2.set(provList[0])  # initial value
 
@@ -104,7 +124,7 @@ option2 = OptionMenu(master, var2, *provList)
 option2.grid(row=2, column=1)
 
 
-def makeMap(df, espece, code_prov, annee1,annee2, groupe, fichier):
+def makeMap(df, espece, code_prov, annee1, annee2, groupe, fichier):
     df = df[df.species == str(espece)]  # select the species
     min = df['year'] >= int(annee1)
     df_min = df[min]
@@ -120,12 +140,37 @@ def makeMap(df, espece, code_prov, annee1,annee2, groupe, fichier):
         else:
             loc = [4.35, 50.8333]
 
+    gdf = gpd.GeoDataFrame(
+        df_final, geometry=gpd.points_from_xy(df_final.decimalLongitude, df_final.decimalLatitude))
+
+    # associer commune a chaque coordoné
+    com = []
+    for pt in gdf['geometry']:
+        count = 0
+        for zone in df_geo.itertuples():
+            if zone.geometry.contains(pt):
+                com.append(zone.commune)
+                break
+            if count == len(df_geo) - 1:
+                com.append('NaN')
+            count += 1
+    df_final['commune']=com
     latitude = df_final['decimalLatitude'].tolist()
     longitude = df_final['decimalLongitude'].tolist()
     individualCount = df_final['individualCount'].tolist()
     year = df_final['year'].tolist()
 
-    mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=17)  # tiles=basemap,
+    mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=20)  # tiles=basemap,
+
+    mappy.choropleth(geo_data="communesgemeente-belgium.geojson",
+                   # I found this NYC zipcode boundaries by googling
+                   data=df_final,  # my dataset
+                   columns=['commune', 'individualCount'],
+                   # zip code is here for matching the geojson zipcode, sales price is the column that changes the color of zipcode areas
+                   key_on='feature.properties.arr_code',
+                   # this path contains zipcodes in str type, this zipcodes should match with our ZIP CODE column
+                   fill_color='BuPu', fill_opacity=0.7, line_opacity=0.3,
+                   legend_name='Nombre d''individus apperçu')
 
     folium.TileLayer('openstreetmap').add_to(mappy)
     folium.TileLayer('Stamen Terrain').add_to(mappy)
@@ -142,8 +187,8 @@ def makeMap(df, espece, code_prov, annee1,annee2, groupe, fichier):
             folium.Marker([latitude[i], longitude[i]], popup="""
                   <i>Nombre d'individue compté: </i><b><br>{}</b><br>
                   <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
-                    round(individualCount[i],2),
-                    round(year[i],2))).add_to(marker_cluster)
+                round(individualCount[i], 2),
+                round(year[i], 2))).add_to(marker_cluster)
 
 
     else:
@@ -151,17 +196,13 @@ def makeMap(df, espece, code_prov, annee1,annee2, groupe, fichier):
             folium.Marker([latitude[i], longitude[i]], popup="""
                   <i>Nombre d'individue compté: </i><b><br>{}</b><br>
                   <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
-                    round(individualCount[i],2),
-                    round(year[i],2))).add_to(mappy)
+                round(individualCount[i], 2),
+                round(year[i], 2))).add_to(mappy)
 
     folium.LayerControl().add_to(mappy)
-    # lien = fichier + '.html'
-    url = 'https://docs.python.org/'
     mappy.save(fichier + '.html')
     filename = 'file:///' + os.getcwd() + '/' + fichier + '.html'
-    #webbrowser.open(fichier + '.html')
-    webbrowser.open(filename)#open_new_tab
-
+    webbrowser.open(filename)  # open_new_tab
 
 
 def ok():
@@ -211,7 +252,6 @@ def ok():
 button = Button(master, text="OK", command=ok)
 button.grid(row=6, column=0)
 
-
 master.mainloop()
 
-#Delichon urbicum
+# Delichon urbicum
