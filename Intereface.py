@@ -5,7 +5,6 @@
 
 # #### <br> Visualize the data base
 
-
 # In[]:
 import pandas as pd
 import warnings
@@ -23,10 +22,16 @@ from shapely.geometry import Polygon, Point, MultiPolygon
 from shapely.geometry import shape
 import json
 
+# from tkhtmlview import HTMLLabel
+# from tk_html_widgets import HTMLLabel
+
 warnings.filterwarnings("ignore")
 
 # In[]:
-df = pd.read_csv(r'/Users/clothildedevillenfagne/Cours/Master_2/Mémoire/moyen_data.csv', sep="\t")
+df = pd.read_csv(r'/Users/clothildedevillenfagne/Cours/Master_2/Mémoire/data_reduite.csv')#moyen_data.csv, sep="\t"
+
+# In[]:
+df
 
 # In[]:
 url_prov = "https://www.odwb.be/explore/dataset/provincesprovincies-belgium/download/?format=shp&timezone=Europe/Brussels&lang=fr"
@@ -51,23 +56,7 @@ met = met["geometry"]
 prov_code = list(fr["prov_code"])
 
 
-
-# In[]:
-liste_com = []
-geo = []
-fd = open("communesgemeente-belgium.geojson", "r")
-if fd :
-    data = json.load(fd)
-    for i in range(len(data["features"])):
-        #try:
-        liste_com.append(data["features"][i]["properties"]["arr_code"])
-        #except:
-        #    liste_com.append(data["features"][i]["properties"]["arr_name_nl"])
-
-        geom = shape(data["features"][i]["geometry"])
-        #print(type(geom))
-        geo.append(geom)
-df_geo = pd.DataFrame({'commune': liste_com, 'geometry': geo})
+# In[1]:
 
 # In[1]:
 
@@ -82,9 +71,17 @@ basemaps = ["OpenStreetMap", "MapQuest Open", "MapQuest Open Aerial",
             "CartoDB positron", "Stamen Terrain", "Stamen Toner",
             "Stamen Watercolor"]
 
-colors = ['red', 'blue', 'gray', 'darkred', 'lightred', 'orange', 'beige', 'green', 'darkgreen',
+all_colors = ['red', 'blue', 'gray', 'darkred', 'lightred', 'orange', 'beige', 'green', 'darkgreen',
           'lightgreen', 'darkblue', 'lightblue', 'purple', 'darkpurple', 'pink', 'cadetblue',
           'lightgray', 'black']
+
+green_bleu = ['lightgreen', 'green', 'darkgreen', 'lightblue', 'cadetblue', 'blue', 'darkblue', 'lightgray', 'gray', 'black']
+
+purple_red = ['beige', 'orange', 'purple', 'darkpurple', 'pink', 'lightred', 'red', 'darkred']
+
+'''bleu = ['#191970', '#000080', '#00008B', '#0000CD', '#0000FF', '#00FFFF', '#00FFFF', '#E0FFFF', '#AFEEEE', '#7FFFD4',
+        '#40E0D0', '#48D1CC', '#00CED1', '#5F9EA0', '#4682B4', '#B0C4DE', '#B0E0E6', '#ADD8E6', '#87CEEB', '#87CEFA',
+        '#00BFFF', '#1E90FF', '#6495ED', '#7B68EE', '#4169E1'] '''
 
 master = Tk()
 
@@ -93,7 +90,7 @@ master.title("Outil de visualisation")
 # Label(master, text="Choisissez une carte").grid(row=0)
 Label(master, text="Nom de l'espèce").grid(row=0)
 Label(master, text="Seul le nom sientifique des espèce est attendu").grid(row=0, column=2)
-Label(master, text="Province").grid(row=2)
+#Label(master, text="Province").grid(row=2)
 Label(master, text="Année").grid(row=3)
 Label(master, text="à").grid(row=3, column=2)
 Label(master, text="Avec groupement ?").grid(row=4)
@@ -117,60 +114,31 @@ Checkbutton(master, variable=cb, onvalue=1, offvalue=0).grid(row=4, column=1)
 nomFichier = Entry(master)
 nomFichier.grid(row=5, column=1)
 
-var2 = StringVar(master)
-var2.set(provList[0])  # initial value
 
-option2 = OptionMenu(master, var2, *provList)
-option2.grid(row=2, column=1)
-
-
-def makeMap(df, espece, code_prov, annee1, annee2, groupe, fichier):
+def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
     df = df[df.species == str(espece)]  # select the species
     min = df['year'] >= int(annee1)
     df_min = df[min]
     max = df_min['year'] <= int(annee2)
     df_final = df_min[max]
 
-    for i in range(len(prov_code)):
+    '''for i in range(len(prov_code)):
         if prov_code[i] == code_prov:
             p = met[i]
             center = p.centroid
             loc = np.array(center)
             break
         else:
-            loc = [4.35, 50.8333]
+            loc = [4.35, 50.8333]'''
 
-    gdf = gpd.GeoDataFrame(
-        df_final, geometry=gpd.points_from_xy(df_final.decimalLongitude, df_final.decimalLatitude))
+    loc = [4.35, 50.8333]
 
-    # associer commune a chaque coordoné
-    com = []
-    for pt in gdf['geometry']:
-        count = 0
-        for zone in df_geo.itertuples():
-            if zone.geometry.contains(pt):
-                com.append(zone.commune)
-                break
-            if count == len(df_geo) - 1:
-                com.append('NaN')
-            count += 1
-    df_final['commune']=com
     latitude = df_final['decimalLatitude'].tolist()
     longitude = df_final['decimalLongitude'].tolist()
     individualCount = df_final['individualCount'].tolist()
     year = df_final['year'].tolist()
 
-    mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=20)  # tiles=basemap,
-
-    mappy.choropleth(geo_data="communesgemeente-belgium.geojson",
-                   # I found this NYC zipcode boundaries by googling
-                   data=df_final,  # my dataset
-                   columns=['commune', 'individualCount'],
-                   # zip code is here for matching the geojson zipcode, sales price is the column that changes the color of zipcode areas
-                   key_on='feature.properties.arr_code',
-                   # this path contains zipcodes in str type, this zipcodes should match with our ZIP CODE column
-                   fill_color='BuPu', fill_opacity=0.7, line_opacity=0.3,
-                   legend_name='Nombre d''individus apperçu')
+    mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=10)  # tiles=basemap,
 
     folium.TileLayer('openstreetmap').add_to(mappy)
     folium.TileLayer('Stamen Terrain').add_to(mappy)
@@ -193,22 +161,30 @@ def makeMap(df, espece, code_prov, annee1, annee2, groupe, fichier):
 
     else:
         for i in range(len(latitude)):
+            if int(annee2)-int(annee1)==0:
+                col = 'blue'
+            else:
+                dif = (year[i] - int(annee1))%len(green_bleu)
+                col = green_bleu[dif]
             folium.Marker([latitude[i], longitude[i]], popup="""
                   <i>Nombre d'individue compté: </i><b><br>{}</b><br>
                   <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
                 round(individualCount[i], 2),
-                round(year[i], 2))).add_to(mappy)
+                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(mappy) #, icon=folium.Icon(color=col,icon_color=col)
 
     folium.LayerControl().add_to(mappy)
+    # lien = fichier + '.html'
+    url = 'https://docs.python.org/'
     mappy.save(fichier + '.html')
     filename = 'file:///' + os.getcwd() + '/' + fichier + '.html'
+    # webbrowser.open(fichier + '.html')
     webbrowser.open(filename)  # open_new_tab
 
 
 def ok():
     # print("Basemap: ", var1.get())
     print("Espèce: ", userespece.get())
-    print("Province: ", var2.get())
+    #print("Province: ", var2.get())
     print("Année de début: ", userAnnee1.get())
     print("Année de fin: ", userAnnee2.get())
     print("Nom de la carte: ", nomFichier.get())
@@ -218,13 +194,13 @@ def ok():
         print("Demande de groupement : NON")
     # base = var1.get()
     espece = userespece.get()
-    province = var2.get()
+    #province = var2.get()
     annee1 = userAnnee1.get()
     annee2 = userAnnee2.get()
     groupe = cb.get()
     fichier = nomFichier.get()
     new_df = df[['species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude']].copy()
-    if province == "West Flanders":
+    '''if province == "West Flanders":
         code = "30000"
     elif province == "Flemish Brabant":
         code = "20001"
@@ -245,8 +221,9 @@ def ok():
     elif province == "Antwerp":
         code = "10000"
     else:
-        code = "00000"
-    makeMap(new_df, espece, code, annee1, annee2, groupe, fichier)
+        code = "00000"'''
+    #makeMap(new_df, espece, code, annee1, annee2, groupe, fichier)
+    makeMap(new_df, espece, annee1, annee2, groupe, fichier)
 
 
 button = Button(master, text="OK", command=ok)
