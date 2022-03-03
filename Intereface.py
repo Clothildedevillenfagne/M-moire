@@ -133,11 +133,6 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
 
     loc = [4.35, 50.8333]
 
-    latitude = df_final['decimalLatitude'].tolist()
-    longitude = df_final['decimalLongitude'].tolist()
-    individualCount = df_final['individualCount'].tolist()
-    year = df_final['year'].tolist()
-
     mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=10)  # tiles=basemap,
 
     folium.TileLayer('openstreetmap').add_to(mappy)
@@ -147,19 +142,15 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
     folium.TileLayer('CartoDB positron').add_to(mappy)
     folium.TileLayer('CartoDB dark_matter').add_to(mappy)
 
+    longitude = df_final['decimalLongitude'].tolist()
+
     if groupe == 1:
+        latitude = df_final['decimalLatitude'].tolist()
+        individualCount = df_final['individualCount'].tolist()
+        year = df_final['year'].tolist()
 
         marker_cluster = MarkerCluster().add_to(mappy)
 
-        for i in range(len(latitude)):
-            folium.Marker([latitude[i], longitude[i]], popup="""
-                  <i>Nombre d'individue compté: </i><b><br>{}</b><br>
-                  <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
-                round(individualCount[i], 2),
-                round(year[i], 2))).add_to(marker_cluster)
-
-
-    else:
         for i in range(len(latitude)):
             if int(annee2)-int(annee1)==0:
                 col = 'blue'
@@ -170,7 +161,59 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
                   <i>Nombre d'individue compté: </i><b><br>{}</b><br>
                   <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
                 round(individualCount[i], 2),
-                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(mappy) #, icon=folium.Icon(color=col,icon_color=col)
+                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(marker_cluster)
+
+
+    else:
+
+        ar = []
+        for lon in set(longitude):
+            new_df = df[df.decimalLongitude == lon].copy()
+            latitu = set(new_df['decimalLatitude'].tolist())
+            for la in latitu:
+                final_df = new_df[new_df.decimalLatitude == la].copy()
+                count = 0
+                count2 = 0
+                for elem in final_df.itertuples():
+                    if count2==0:
+                        lat = la + count
+                        long = lon
+                    elif count2 == 1:
+                        long = lon + count
+                        lat = lat
+                    elif count2 == 2:
+                        lat = la - count
+                        long = lon
+                    else:
+                        long = lon - count
+                        lat = lat
+                        count += 0.0005
+                        count2 = -1
+
+                    ind = elem.individualCount
+                    ye = elem.year
+                    count2+=1
+                    new_line = [ind, lat, long, ye]
+                    ar.append(new_line)
+
+        new_cov = pd.DataFrame(ar,
+                               columns=['individualCount', 'decimalLatitude', 'decimalLongitude','year'])
+        final_lat = new_cov['decimalLatitude'].tolist()
+        final_lon = new_cov['decimalLongitude'].tolist()
+        final_year = new_cov['year'].tolist()
+        final_indi = new_cov['individualCount'].tolist()
+
+        for i in range(len(final_lat)):
+            if int(annee2)-int(annee1)==0:
+                col = 'blue'
+            else:
+                dif = (final_year[i] - int(annee1))%len(green_bleu)
+                col = green_bleu[dif]
+            folium.Marker([final_lat[i], final_lon[i]], popup="""
+                  <i>Nombre d'individue compté: </i><b><br>{}</b><br>
+                  <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
+                round(final_indi[i], 2),
+                round(final_year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(mappy) #, icon=folium.Icon(color=col,icon_color=col)
 
     folium.LayerControl().add_to(mappy)
     # lien = fichier + '.html'
