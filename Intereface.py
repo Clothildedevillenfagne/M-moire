@@ -14,21 +14,17 @@ import io
 import geopandas as gpd
 from tkinter import *
 import folium
+from folium import FeatureGroup
 import numpy as np
 from folium.plugins import MarkerCluster
 import webbrowser
 import os
-from shapely.geometry import Polygon, Point, MultiPolygon
-from shapely.geometry import shape
-import json
-
-# from tkhtmlview import HTMLLabel
-# from tk_html_widgets import HTMLLabel
 
 warnings.filterwarnings("ignore")
 
 # In[]:
-df = pd.read_csv(r'/Users/clothildedevillenfagne/Cours/Master_2/Mémoire/data_reduite.csv')#moyen_data.csv, sep="\t"
+df = pd.read_csv(
+    r'/Users/clothildedevillenfagne/Cours/Master_2/Mémoire/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
 # In[]:
 df
@@ -58,8 +54,6 @@ prov_code = list(fr["prov_code"])
 
 # In[1]:
 
-# In[1]:
-
 ''' Ce programme peut seulement faire une carte avec les donner fournie par natagora et NatuurPunt
     Makes a HTML document in the same directory as this script 
 '''
@@ -71,17 +65,18 @@ basemaps = ["OpenStreetMap", "MapQuest Open", "MapQuest Open Aerial",
             "CartoDB positron", "Stamen Terrain", "Stamen Toner",
             "Stamen Watercolor"]
 
-all_colors = ['red', 'blue', 'gray', 'darkred', 'lightred', 'orange', 'beige', 'green', 'darkgreen',
+colors = ['red', 'blue', 'gray', 'darkred', 'lightred', 'orange', 'beige', 'green', 'darkgreen',
           'lightgreen', 'darkblue', 'lightblue', 'purple', 'darkpurple', 'pink', 'cadetblue',
           'lightgray', 'black']
 
-green_bleu = ['lightgreen', 'green', 'darkgreen', 'lightblue', 'cadetblue', 'blue', 'darkblue', 'lightgray', 'gray', 'black']
+green_bleu = ['lightgreen', 'green', 'darkgreen', 'lightblue', 'cadetblue', 'blue', 'darkblue', 'lightgray', 'gray',
+              'black']
 
 purple_red = ['beige', 'orange', 'purple', 'darkpurple', 'pink', 'lightred', 'red', 'darkred']
 
-'''bleu = ['#191970', '#000080', '#00008B', '#0000CD', '#0000FF', '#00FFFF', '#00FFFF', '#E0FFFF', '#AFEEEE', '#7FFFD4',
+bleu = ['#191970', '#000080', '#00008B', '#0000CD', '#0000FF', '#00FFFF', '#00FFFF', '#E0FFFF', '#AFEEEE', '#7FFFD4',
         '#40E0D0', '#48D1CC', '#00CED1', '#5F9EA0', '#4682B4', '#B0C4DE', '#B0E0E6', '#ADD8E6', '#87CEEB', '#87CEFA',
-        '#00BFFF', '#1E90FF', '#6495ED', '#7B68EE', '#4169E1'] '''
+        '#00BFFF', '#1E90FF', '#6495ED', '#7B68EE', '#4169E1']
 
 master = Tk()
 
@@ -90,7 +85,7 @@ master.title("Outil de visualisation")
 # Label(master, text="Choisissez une carte").grid(row=0)
 Label(master, text="Nom de l'espèce").grid(row=0)
 Label(master, text="Seul le nom sientifique des espèce est attendu").grid(row=0, column=2)
-#Label(master, text="Province").grid(row=2)
+# Label(master, text="Province").grid(row=2)
 Label(master, text="Année").grid(row=3)
 Label(master, text="à").grid(row=3, column=2)
 Label(master, text="Avec groupement ?").grid(row=4)
@@ -115,7 +110,7 @@ nomFichier = Entry(master)
 nomFichier.grid(row=5, column=1)
 
 
-def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
+def makeMap(df, espece, annee1, annee2, groupe, fichier):  # code_prov,
     df = df[df.species == str(espece)]  # select the species
     min = df['year'] >= int(annee1)
     df_min = df[min]
@@ -143,19 +138,20 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
     folium.TileLayer('CartoDB dark_matter').add_to(mappy)
 
     longitude = df_final['decimalLongitude'].tolist()
+    latitude = df_final['decimalLatitude'].tolist()
+    individualCount = df_final['individualCount'].tolist()
+    year = df_final['year'].tolist()
+    num_obs = df_final['numberObservation'].tolist()
 
     if groupe == 1:
-        latitude = df_final['decimalLatitude'].tolist()
-        individualCount = df_final['individualCount'].tolist()
-        year = df_final['year'].tolist()
 
         marker_cluster = MarkerCluster().add_to(mappy)
 
         for i in range(len(latitude)):
-            if int(annee2)-int(annee1)==0:
+            if int(annee2) - int(annee1) == 0:
                 col = 'blue'
             else:
-                dif = (year[i] - int(annee1))%len(green_bleu)
+                dif = (year[i] - int(annee1)) % len(green_bleu)
                 col = green_bleu[dif]
             folium.Marker([latitude[i], longitude[i]], popup="""
                   <i>Nombre d'individue compté: </i><b><br>{}</b><br>
@@ -166,54 +162,41 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
 
     else:
 
-        ar = []
-        for lon in set(longitude):
-            new_df = df[df.decimalLongitude == lon].copy()
-            latitu = set(new_df['decimalLatitude'].tolist())
-            for la in latitu:
-                final_df = new_df[new_df.decimalLatitude == la].copy()
-                count = 0
-                count2 = 0
-                for elem in final_df.itertuples():
-                    if count2==0:
-                        lat = la + count
-                        long = lon
-                    elif count2 == 1:
-                        long = lon + count
-                        lat = lat
-                    elif count2 == 2:
-                        lat = la - count
-                        long = lon
-                    else:
-                        long = lon - count
-                        lat = lat
-                        count += 0.0005
-                        count2 = -1
+        annee = int(annee1)
+        lgd_txt = '<span style="color: {col};">{txt}</span>'
+        dico_feature = {}
+        while annee <= int(annee2):
+            dif = (annee - int(annee1)) % len(green_bleu)
+            col = green_bleu[dif]
+            dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt=annee, col=col))
+            dico_feature[annee].add_to(mappy)
+            annee += 1
 
-                    ind = elem.individualCount
-                    ye = elem.year
-                    count2+=1
-                    new_line = [ind, lat, long, ye]
-                    ar.append(new_line)
-
-        new_cov = pd.DataFrame(ar,
-                               columns=['individualCount', 'decimalLatitude', 'decimalLongitude','year'])
-        final_lat = new_cov['decimalLatitude'].tolist()
-        final_lon = new_cov['decimalLongitude'].tolist()
-        final_year = new_cov['year'].tolist()
-        final_indi = new_cov['individualCount'].tolist()
-
-        for i in range(len(final_lat)):
-            if int(annee2)-int(annee1)==0:
+        for i in range(len(latitude)):
+            if int(annee2) - int(annee1) == 0:
                 col = 'blue'
             else:
-                dif = (final_year[i] - int(annee1))%len(green_bleu)
+                dif = (year[i] - int(annee1)) % len(green_bleu)
                 col = green_bleu[dif]
-            folium.Marker([final_lat[i], final_lon[i]], popup="""
+
+            folium.CircleMarker(location=(latitude[i], longitude[i]), radius=num_obs[i],
+                                popup="""
+                                 <i>Nombre d'individue compté: </i><b><br>{}</b><br>
+                                 <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
+                                    round(individualCount[i], 2),
+                                    round(year[i], 2)),  # line_color=col,
+                                color=col, fill=False).add_to(dico_feature[year[i]])  # '#3186cc'
+            '''folium.Marker([latitude[i], longitude[i]], popup="""
                   <i>Nombre d'individue compté: </i><b><br>{}</b><br>
                   <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
-                round(final_indi[i], 2),
-                round(final_year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(mappy) #, icon=folium.Icon(color=col,icon_color=col)
+                round(individualCount[i], 2),
+                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(mappy) '''  # , icon=folium.Icon(color=col,icon_color=col)
+        annee = int(annee1)
+        while annee > int(annee2):
+            #dico_feature[annee].add_to(mappy)
+            mappy.add_child(dico_feature[annee])
+            annee += 1
+        #mappy.add_child(folium.map.LayerControl())
 
     folium.LayerControl().add_to(mappy)
     # lien = fichier + '.html'
@@ -227,7 +210,7 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):#code_prov,
 def ok():
     # print("Basemap: ", var1.get())
     print("Espèce: ", userespece.get())
-    #print("Province: ", var2.get())
+    # print("Province: ", var2.get())
     print("Année de début: ", userAnnee1.get())
     print("Année de fin: ", userAnnee2.get())
     print("Nom de la carte: ", nomFichier.get())
@@ -237,12 +220,13 @@ def ok():
         print("Demande de groupement : NON")
     # base = var1.get()
     espece = userespece.get()
-    #province = var2.get()
+    # province = var2.get()
     annee1 = userAnnee1.get()
     annee2 = userAnnee2.get()
     groupe = cb.get()
     fichier = nomFichier.get()
-    new_df = df[['species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude']].copy()
+    new_df = df[
+        ['species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude', 'numberObservation']].copy()
     '''if province == "West Flanders":
         code = "30000"
     elif province == "Flemish Brabant":
@@ -265,7 +249,7 @@ def ok():
         code = "10000"
     else:
         code = "00000"'''
-    #makeMap(new_df, espece, code, annee1, annee2, groupe, fichier)
+    # makeMap(new_df, espece, code, annee1, annee2, groupe, fichier)
     makeMap(new_df, espece, annee1, annee2, groupe, fichier)
 
 
