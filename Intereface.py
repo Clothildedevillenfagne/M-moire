@@ -26,9 +26,8 @@ warnings.filterwarnings("ignore")
 df = pd.read_csv(
     r'/Users/clothildedevillenfagne/Cours/Master_2/Mémoire/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
-
 # In[]:
-url_prov = "https://www.odwb.be/explore/dataset/provincesprovincies-belgium/download/?format=shp&timezone=Europe/Brussels&lang=fr"
+'''url_prov = "https://www.odwb.be/explore/dataset/provincesprovincies-belgium/download/?format=shp&timezone=Europe/Brussels&lang=fr"
 local_path = "tmp/"  # folder to create
 filter_prov = []  # only metropolitan France
 
@@ -47,7 +46,7 @@ fr.crs = "epsg:4326"  # {'init': 'epsg:4326'}
 met = fr.query("prov_code not in @filter_prov")
 met.set_index("prov_code", inplace=True)
 met = met["geometry"]
-prov_code = list(fr["prov_code"])
+prov_code = list(fr["prov_code"])'''
 
 
 # In[1]:
@@ -76,12 +75,17 @@ bleu = ['#191970', '#000080', '#00008B', '#0000CD', '#0000FF', '#00FFFF', '#00FF
         '#40E0D0', '#48D1CC', '#00CED1', '#5F9EA0', '#4682B4', '#B0C4DE', '#B0E0E6', '#ADD8E6', '#87CEEB', '#87CEFA',
         '#00BFFF', '#1E90FF', '#6495ED', '#7B68EE', '#4169E1']
 
+list_espece1 = sorted(list(set(df['species'].tolist())))
+
+list_espece2 = ['Pas d\'autre espèce'] + list_espece1
+
 master = Tk()
 
 master.title("Outil de visualisation")
 
 # Label(master, text="Choisissez une carte").grid(row=0)
 Label(master, text="Nom de l'espèce").grid(row=0)
+Label(master, text="Nom de l'espèce 2").grid(row=1)
 Label(master, text="Seul le nom sientifique des espèce est attendu").grid(row=0, column=2)
 # Label(master, text="Province").grid(row=2)
 Label(master, text="Année").grid(row=3)
@@ -89,11 +93,15 @@ Label(master, text="à").grid(row=3, column=2)
 Label(master, text="Avec groupement ?").grid(row=4)
 Label(master, text="Nom de la carte enregistée").grid(row=5)
 
-# e1 = Entry(master)
-userespece = Entry(master)
-
-# e1.grid(row=0, column=1)
+var1 = StringVar(master)
+var1.set(list_espece1[0])  # initial value
+userespece = OptionMenu(master, var1, *list_espece1)
 userespece.grid(row=0, column=1)
+
+var2 = StringVar(master)
+var2.set(list_espece2[0])
+userespece2 = OptionMenu(master, var2, *list_espece2)
+userespece2.grid(row=1, column=1)
 
 userAnnee1 = Entry(master)
 userAnnee1.grid(row=3, column=1)
@@ -108,13 +116,102 @@ nomFichier = Entry(master)
 nomFichier.grid(row=5, column=1)
 
 
-def makeMap(df, espece, annee1, annee2, groupe, fichier):  # code_prov,
-    df = df[df.species == str(espece)]  # select the species
-    min = df['year'] >= int(annee1)
-    df_min = df[min]
-    max = df_min['year'] <= int(annee2)
-    df_final = df_min[max]
+def makeMapGroupement (df_final, map, espece,  annee1, annee2, color):
 
+    longitude = df_final['decimalLongitude'].tolist()
+    latitude = df_final['decimalLatitude'].tolist()
+    individualCount = df_final['individualCount'].tolist()
+    year = df_final['year'].tolist()
+
+    annee = int(annee1)
+    lgd_txt = '<span style="color: {col};">{txt}</span>'
+    dico_feature = {}
+    dico_cluster = {}
+    while annee <= int(annee2):
+        dif = (annee - int(annee1)) % len(color)
+        col = color[dif]
+        dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt= str(annee) + ' ' + espece, col=col))
+        dico_cluster[annee] = MarkerCluster().add_to(dico_feature[annee])
+        # dico_feature[annee].add_to(marker_cluster)
+        dico_feature[annee].add_to(map)
+        annee += 1
+
+    for i in range(len(latitude)):
+        if int(annee2) - int(annee1) == 0:
+            col = 'blue'
+        else:
+            dif = (year[i] - int(annee1)) % len(color)
+            col = color[dif]
+        folium.Marker([latitude[i], longitude[i]], popup="""
+                  <i>Nombre d'individue compté: </i><b><br>{}</b><br>
+                  <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
+            round(individualCount[i], 2),
+            round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(
+            dico_cluster[year[i]])  # marker_cluster)
+    annee = int(annee1)
+
+    while annee > int(annee2):
+        map.add_child(dico_feature[annee])
+        annee += 1
+
+    return map
+
+def makeMapNonGroup(df_final, map, espece, annee1, annee2, color):
+    longitude = df_final['decimalLongitude'].tolist()
+    latitude = df_final['decimalLatitude'].tolist()
+    individualCount = df_final['individualCount'].tolist()
+    year = df_final['year'].tolist()
+    num_obs = df_final['numberObservation'].tolist()
+
+    annee = int(annee1)
+    lgd_txt = '<span style="color: {col};">{txt}</span>'
+    dico_feature = {}
+    while annee <= int(annee2):
+        dif = (annee - int(annee1)) % len(color)
+        col = color[dif]
+        dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt=str(annee)+' '+espece, col=col))
+        dico_feature[annee].add_to(map)
+        annee += 1
+
+    for i in range(len(latitude)):
+        if int(annee2) - int(annee1) == 0:
+            col = 'blue'
+        else:
+            dif = (year[i] - int(annee1)) % len(color)
+            col = color[dif]
+
+        folium.CircleMarker(location=(latitude[i], longitude[i]), radius=num_obs[i],
+                            popup="""
+                                     <i>Nombre d'individue compté: </i><b><br>{}</b><br>
+                                     <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
+                                round(individualCount[i], 2),
+                                round(year[i], 2)),  # line_color=col,
+                            color=col, fill=False).add_to(dico_feature[year[i]])  # '#3186cc'
+
+    annee = int(annee1)
+    while annee > int(annee2):
+        # dico_feature[annee].add_to(mappy)
+        map.add_child(dico_feature[annee])
+        annee += 1
+
+    return map
+
+
+
+
+def makeMap(df, espece1, espece2, annee1, annee2, groupe, fichier):  # code_prov,
+    df1 = df[df.species == str(espece1)].copy()  # select the species
+    min = df1['year'] >= int(annee1)
+    df_min = df1[min]
+    max = df_min['year'] <= int(annee2)
+    df_final1 = df_min[max]
+
+    if espece2 != 'Pas d\'autre espèce':
+        df2 = df[df.species == str(espece2)].copy()  # select the species
+        min2 = df2['year'] >= int(annee1)
+        df_min2 = df2[min2]
+        max2 = df_min2['year'] <= int(annee2)
+        df_final2 = df_min2[max2]
     '''for i in range(len(prov_code)):
         if prov_code[i] == code_prov:
             p = met[i]
@@ -135,84 +232,20 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):  # code_prov,
     folium.TileLayer('CartoDB positron').add_to(mappy)
     folium.TileLayer('CartoDB dark_matter').add_to(mappy)
 
-    longitude = df_final['decimalLongitude'].tolist()
-    latitude = df_final['decimalLatitude'].tolist()
-    individualCount = df_final['individualCount'].tolist()
-    year = df_final['year'].tolist()
-    num_obs = df_final['numberObservation'].tolist()
-
     if groupe == 1:
 
-        #marker_cluster = MarkerCluster().add_to(mappy)
+        mappy = makeMapGroupement(df_final1,mappy, espece1, annee1, annee2, green_bleu)
 
-        annee = int(annee1)
-        lgd_txt = '<span style="color: {col};">{txt}</span>'
-        dico_feature = {}
-        dico_cluster = {}
-        while annee <= int(annee2):
-            dif = (annee - int(annee1)) % len(green_bleu)
-            col = green_bleu[dif]
-            dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt=annee, col=col))
-            dico_cluster[annee] = MarkerCluster().add_to(dico_feature[annee])
-            #dico_feature[annee].add_to(marker_cluster)
-            dico_feature[annee].add_to(mappy)
-            annee += 1
-
-        for i in range(len(latitude)):
-            if int(annee2) - int(annee1) == 0:
-                col = 'blue'
-            else:
-                dif = (year[i] - int(annee1)) % len(green_bleu)
-                col = green_bleu[dif]
-            folium.Marker([latitude[i], longitude[i]], popup="""
-                  <i>Nombre d'individue compté: </i><b><br>{}</b><br>
-                  <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
-                round(individualCount[i], 2),
-                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(dico_cluster[year[i]])#marker_cluster)
-        annee = int(annee1)
-
-        while annee > int(annee2):
-            mappy.add_child(dico_feature[annee])
-            annee += 1
+        if espece2 != 'Pas d\'autre espèce':
+            mappy = makeMapGroupement(df_final2, mappy, espece2, annee1, annee2, purple_red)
 
 
     else:
 
-        annee = int(annee1)
-        lgd_txt = '<span style="color: {col};">{txt}</span>'
-        dico_feature = {}
-        while annee <= int(annee2):
-            dif = (annee - int(annee1)) % len(green_bleu)
-            col = green_bleu[dif]
-            dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt=annee, col=col))
-            dico_feature[annee].add_to(mappy)
-            annee += 1
+        mappy = makeMapNonGroup(df_final1, mappy, espece1, annee1, annee2, green_bleu)
 
-        for i in range(len(latitude)):
-            if int(annee2) - int(annee1) == 0:
-                col = 'blue'
-            else:
-                dif = (year[i] - int(annee1)) % len(green_bleu)
-                col = green_bleu[dif]
-
-            folium.CircleMarker(location=(latitude[i], longitude[i]), radius=num_obs[i],
-                                popup="""
-                                 <i>Nombre d'individue compté: </i><b><br>{}</b><br>
-                                 <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
-                                    round(individualCount[i], 2),
-                                    round(year[i], 2)),  # line_color=col,
-                                color=col, fill=False).add_to(dico_feature[year[i]])  # '#3186cc'
-            '''folium.Marker([latitude[i], longitude[i]], popup="""
-                  <i>Nombre d'individue compté: </i><b><br>{}</b><br>
-                  <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
-                round(individualCount[i], 2),
-                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(mappy) '''  # , icon=folium.Icon(color=col,icon_color=col)
-        annee = int(annee1)
-        while annee > int(annee2):
-            #dico_feature[annee].add_to(mappy)
-            mappy.add_child(dico_feature[annee])
-            annee += 1
-        #mappy.add_child(folium.map.LayerControl())
+        if espece2 != 'Pas d\'autre espèce':
+            mappy = makeMapNonGroup(df_final2, mappy, espece2, annee1, annee2, purple_red)
 
     folium.LayerControl().add_to(mappy)
     # lien = fichier + '.html'
@@ -225,7 +258,8 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):  # code_prov,
 
 def ok():
     # print("Basemap: ", var1.get())
-    print("Espèce: ", userespece.get())
+    print("Espèce 1: ", var1.get())
+    print("Espèce 2: ", var2.get())
     # print("Province: ", var2.get())
     print("Année de début: ", userAnnee1.get())
     print("Année de fin: ", userAnnee2.get())
@@ -235,7 +269,8 @@ def ok():
     else:
         print("Demande de groupement : NON")
     # base = var1.get()
-    espece = userespece.get()
+    espece1 = var1.get()
+    espece2 = var2.get()
     # province = var2.get()
     annee1 = userAnnee1.get()
     annee2 = userAnnee2.get()
@@ -266,7 +301,7 @@ def ok():
     else:
         code = "00000"'''
     # makeMap(new_df, espece, code, annee1, annee2, groupe, fichier)
-    makeMap(new_df, espece, annee1, annee2, groupe, fichier)
+    makeMap(new_df, espece1, espece2, annee1, annee2, groupe, fichier)
 
 
 button = Button(master, text="OK", command=ok)
