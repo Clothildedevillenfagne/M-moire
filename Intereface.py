@@ -26,8 +26,6 @@ warnings.filterwarnings("ignore")
 df = pd.read_csv(
     r'/Users/clothildedevillenfagne/Cours/Master_2/Mémoire/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
-# In[]:
-df
 
 # In[]:
 url_prov = "https://www.odwb.be/explore/dataset/provincesprovincies-belgium/download/?format=shp&timezone=Europe/Brussels&lang=fr"
@@ -145,7 +143,20 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):  # code_prov,
 
     if groupe == 1:
 
-        marker_cluster = MarkerCluster().add_to(mappy)
+        #marker_cluster = MarkerCluster().add_to(mappy)
+
+        annee = int(annee1)
+        lgd_txt = '<span style="color: {col};">{txt}</span>'
+        dico_feature = {}
+        dico_cluster = {}
+        while annee <= int(annee2):
+            dif = (annee - int(annee1)) % len(green_bleu)
+            col = green_bleu[dif]
+            dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt=annee, col=col))
+            dico_cluster[annee] = MarkerCluster().add_to(dico_feature[annee])
+            #dico_feature[annee].add_to(marker_cluster)
+            dico_feature[annee].add_to(mappy)
+            annee += 1
 
         for i in range(len(latitude)):
             if int(annee2) - int(annee1) == 0:
@@ -157,7 +168,12 @@ def makeMap(df, espece, annee1, annee2, groupe, fichier):  # code_prov,
                   <i>Nombre d'individue compté: </i><b><br>{}</b><br>
                   <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
                 round(individualCount[i], 2),
-                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(marker_cluster)
+                round(year[i], 2)), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(dico_cluster[year[i]])#marker_cluster)
+        annee = int(annee1)
+
+        while annee > int(annee2):
+            mappy.add_child(dico_feature[annee])
+            annee += 1
 
 
     else:
