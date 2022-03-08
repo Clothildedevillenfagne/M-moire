@@ -75,7 +75,8 @@ bleu = ['#191970', '#000080', '#00008B', '#0000CD', '#0000FF', '#00FFFF', '#00FF
         '#40E0D0', '#48D1CC', '#00CED1', '#5F9EA0', '#4682B4', '#B0C4DE', '#B0E0E6', '#ADD8E6', '#87CEEB', '#87CEFA',
         '#00BFFF', '#1E90FF', '#6495ED', '#7B68EE', '#4169E1']
 
-list_espece1 = sorted(list(set(df['species'].tolist())))
+list_espece1 = sorted(set(df['species'].tolist()))
+
 
 list_espece2 = ['Pas d\'autre espèce'] + list_espece1
 
