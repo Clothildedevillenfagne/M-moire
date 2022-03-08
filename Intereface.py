@@ -24,7 +24,7 @@ warnings.filterwarnings("ignore")
 
 # In[]:
 df = pd.read_csv(
-    r'/Users/clothildedevillenfagne/Cours/Master_2/Mémoire/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
+    r'/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
 # In[]:
 '''url_prov = "https://www.odwb.be/explore/dataset/provincesprovincies-belgium/download/?format=shp&timezone=Europe/Brussels&lang=fr"
