@@ -23,31 +23,7 @@ import os
 warnings.filterwarnings("ignore")
 
 # In[]:
-df = pd.read_csv(
-    r'/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
-
-# In[]:
-'''url_prov = "https://www.odwb.be/explore/dataset/provincesprovincies-belgium/download/?format=shp&timezone=Europe/Brussels&lang=fr"
-local_path = "tmp/"  # folder to create
-filter_prov = []  # only metropolitan France
-
-r = requests.get(url_prov)
-z = zipfile.ZipFile(io.BytesIO(r.content))
-z.extractall(path=local_path)
-filenames = [
-    y
-    for y in sorted(z.namelist())
-    for ending in ["dbf", "prj", "shp", "shx"]
-    if y.endswith(ending)
-]
-dbf, prj, shp, shx = [filename for filename in filenames]
-fr = gpd.read_file(local_path + shp)  # + encoding="utf-8" if needed
-fr.crs = "epsg:4326"  # {'init': 'epsg:4326'}
-met = fr.query("prov_code not in @filter_prov")
-met.set_index("prov_code", inplace=True)
-met = met["geometry"]
-prov_code = list(fr["prov_code"])'''
-
+df = pd.read_csv(r'./data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
 # In[1]:
 
@@ -77,45 +53,107 @@ bleu = ['#191970', '#000080', '#00008B', '#0000CD', '#0000FF', '#00FFFF', '#00FF
 
 list_espece1 = sorted(set(df['species'].tolist()))
 
-
 list_espece2 = ['Pas d\'autre espèce'] + list_espece1
+
+list_kig = sorted(set(df['kingdom'].tolist()))
+
+list_phy = sorted(set(df['phylum'].tolist()))
+#list_phy = [x for x in list_phy if pd.isnull(x) == False]
+
+list_class = set(df['class'].tolist())
+list_class = [x for x in list_class if pd.isnull(x) == False]
+list_class = sorted(list_class)
+
+list_or = set(df['order'].tolist())
+list_or = [x for x in list_or if pd.isnull(x) == False]
+list_or = sorted(list_or)
+
+list_fam = set(df['family'].tolist())
+list_fam = [x for x in list_fam if pd.isnull(x) == False]
+list_fam = sorted(list_fam)
+
+list_ge = set(df['genus'].tolist())
+list_ge = [x for x in list_ge if pd.isnull(x) == False]
+list_ge = sorted(list_ge)
 
 master = Tk()
 
 master.title("Outil de visualisation")
 
 # Label(master, text="Choisissez une carte").grid(row=0)
-Label(master, text="Nom de l'espèce").grid(row=0)
-Label(master, text="Nom de l'espèce 2").grid(row=1)
-Label(master, text="Seul le nom sientifique des espèce est attendu").grid(row=0, column=2)
+Label(master, text= "Précision de la taxonomie souhaité (seul le rang séléctionné sera pris en compte)").grid(row=0)
+#Label(master, text="Nom de l'espèce").grid(row=2)
+#Label(master, text="Nom de l'espèce 2").grid(row=3)
+#Label(master, text="Seul le nom sientifique des espèce est attendu").grid(row=0, column=2)
 # Label(master, text="Province").grid(row=2)
-Label(master, text="Année").grid(row=3)
-Label(master, text="à").grid(row=3, column=2)
-Label(master, text="Avec groupement ?").grid(row=4)
-Label(master, text="Nom de la carte enregistée").grid(row=5)
+Label(master, text="Année").grid(row=4)
+Label(master, text="à").grid(row=4, column=2)
+Label(master, text="Avec groupement ?").grid(row=5)
+Label(master, text="Nom de la carte enregistée").grid(row=6)
 
-var1 = StringVar(master)
-var1.set(list_espece1[0])  # initial value
-userespece = OptionMenu(master, var1, *list_espece1)
-userespece.grid(row=0, column=1)
 
-var2 = StringVar(master)
-var2.set(list_espece2[0])
-userespece2 = OptionMenu(master, var2, *list_espece2)
-userespece2.grid(row=1, column=1)
+var = IntVar()
+
+kig = Radiobutton(master, text="Règne", variable=var, value=7).grid(row=1, column=0)
+phy = Radiobutton(master, text="Embranchement", variable=var, value=6).grid(row=1, column=1)
+cl = Radiobutton(master, text="Classe", variable=var, value=5).grid(row=1, column=2)
+ord = Radiobutton(master, text="Ordre", variable=var, value=4).grid(row=1, column=3)
+fam = Radiobutton(master, text="Famille", variable=var, value=3).grid(row=1, column=4)
+ge = Radiobutton(master, text="Genre", variable=var, value=2).grid(row=1, column=5)
+esp = Radiobutton(master, text="Espèce", variable=var, value=1).grid(row=1, column=6)
+
+varesp1 = StringVar(master)
+varesp1.set(list_espece1[0])  # initial value
+userespece = OptionMenu(master, varesp1, *list_espece1)
+userespece.grid(row=2, column=6)
+
+varesp2 = StringVar(master)
+varesp2.set(list_espece2[0])
+userespece2 = OptionMenu(master, varesp2, *list_espece2)
+userespece2.grid(row=3, column=6)
+
+varkig = StringVar(master)
+varkig.set(list_kig[0])  # initial value
+userkig = OptionMenu(master, varkig, *list_kig)
+userkig.grid(row=2, column=0)
+
+varphy = StringVar(master)
+varphy.set(list_phy[0])
+userphy = OptionMenu(master, varphy, *list_phy)
+userphy.grid(row=2, column=1)
+
+varclass = StringVar(master)
+varclass.set(list_class[0])
+userfam = OptionMenu(master, varclass, *list_class)
+userfam.grid(row=2, column=2)
+
+varor = StringVar(master)
+varor.set(list_or[0])
+useror = OptionMenu(master, varor, *list_or)
+useror.grid(row=2, column=3)
+
+varfam = StringVar(master)
+varfam.set(list_fam[0])
+userfam = OptionMenu(master, varfam, *list_fam)
+userfam.grid(row=2, column=4)
+
+varge = StringVar(master)
+varge.set(list_ge[0])
+userge = OptionMenu(master, varge, *list_ge)
+userge.grid(row=2, column=5)
+
 
 userAnnee1 = Entry(master)
-userAnnee1.grid(row=3, column=1)
+userAnnee1.grid(row=4, column=1)
 
 userAnnee2 = Entry(master)
-userAnnee2.grid(row=3, column=3)
+userAnnee2.grid(row=4, column=3)
 
 cb = IntVar()
-Checkbutton(master, variable=cb, onvalue=1, offvalue=0).grid(row=4, column=1)
+Checkbutton(master, variable=cb, onvalue=1, offvalue=0).grid(row=5, column=1)
 
 nomFichier = Entry(master)
-nomFichier.grid(row=5, column=1)
-
+nomFichier.grid(row=6, column=1)
 
 def makeMapGroupement (df_final, map, espece,  annee1, annee2, color):
 
@@ -181,12 +219,14 @@ def makeMapNonGroup(df_final, map, espece, annee1, annee2, color):
             dif = (year[i] - int(annee1)) % len(color)
             col = color[dif]
 
-        folium.CircleMarker(location=(latitude[i], longitude[i]), radius=num_obs[i],
+        folium.CircleMarker(location=(latitude[i], longitude[i]), radius=np.log(num_obs[i]),
                             popup="""
                                      <i>Nombre d'individue compté: </i><b><br>{}</b><br>
-                                     <i>Année de l'observation: </i><b><br>{}</b><br>""".format(
+                                     <i>Année de l'observation: </i><b><br>{}</b><br>
+                                     <i>Nombre d'observation: </i><b><br>{}</b><br>""".format(
                                 round(individualCount[i], 2),
-                                round(year[i], 2)),  # line_color=col,
+                                round(year[i], 2),
+                                round(num_obs[i], 2)),  # line_color=col,
                             color=col, fill=False).add_to(dico_feature[year[i]])  # '#3186cc'
 
     annee = int(annee1)
@@ -200,27 +240,47 @@ def makeMapNonGroup(df_final, map, espece, annee1, annee2, color):
 
 
 
-def makeMap(df, espece1, espece2, annee1, annee2, groupe, fichier):  # code_prov,
-    df1 = df[df.species == str(espece1)].copy()  # select the species
-    min = df1['year'] >= int(annee1)
-    df_min = df1[min]
-    max = df_min['year'] <= int(annee2)
-    df_final1 = df_min[max]
+def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, fichier):  # code_prov,
+    if tax == "species":
+        df1 = df[df.species == str(espece1)].copy()  # select the species
+        min = df1['year'] >= int(annee1)
+        df_min = df1[min]
+        max = df_min['year'] <= int(annee2)
+        df_final1 = df_min[max]
 
-    if espece2 != 'Pas d\'autre espèce':
-        df2 = df[df.species == str(espece2)].copy()  # select the species
-        min2 = df2['year'] >= int(annee1)
-        df_min2 = df2[min2]
-        max2 = df_min2['year'] <= int(annee2)
-        df_final2 = df_min2[max2]
-    '''for i in range(len(prov_code)):
-        if prov_code[i] == code_prov:
-            p = met[i]
-            center = p.centroid
-            loc = np.array(center)
-            break
-        else:
-            loc = [4.35, 50.8333]'''
+        if espece2 != 'Pas d\'autre espèce':
+            df2 = df[df.species == str(espece2)].copy()  # select the species
+            min2 = df2['year'] >= int(annee1)
+            df_min2 = df2[min2]
+            max2 = df_min2['year'] <= int(annee2)
+            df_final2 = df_min2[max2]
+
+    else:
+        df1 = df[df[tax] == str(espece1)].copy()
+        min = df1['year'] >= int(annee1)
+        df_min = df1[min]
+        max = df_min['year'] <= int(annee2)
+        df_final1 = df_min[max]
+        year = []
+        for i in range(int(annee1)-int(annee2)+1):
+            year.append(int(annee1)+i)
+        ar=[]
+        for ye in year:
+            new_df = df[df.year == ye].copy()
+            longitude = set(new_df['decimalLongitude'].tolist())
+            count = 0
+            print('année :', ye)
+            for lon in longitude:
+                new_new_df = new_df[new_df.decimalLongitude == lon].copy()
+                latitude = set(new_new_df['decimalLatitude'].tolist())
+                for la in latitude:  # d'abord refaire un for pour longitude puis latitude
+                    final_df = new_new_df[new_new_df.decimalLatitude == la].copy()
+                    num_obs = final_df['numberObservation'].sum()
+                    sums = final_df['individualCount'].sum()
+                    new_line = [sums, la, lon, ye, num_obs]
+                    ar.append(new_line)
+            df_final1 = pd.DataFrame(ar, columns=['individualCount', 'decimalLatitude',
+                                                'decimalLongitude', 'year', 'numberObservation'])
 
     loc = [4.35, 50.8333]
 
@@ -249,18 +309,57 @@ def makeMap(df, espece1, espece2, annee1, annee2, groupe, fichier):  # code_prov
             mappy = makeMapNonGroup(df_final2, mappy, espece2, annee1, annee2, purple_red)
 
     folium.LayerControl().add_to(mappy)
-    # lien = fichier + '.html'
-    url = 'https://docs.python.org/'
     mappy.save(fichier + '.html')
     filename = 'file:///' + os.getcwd() + '/' + fichier + '.html'
-    # webbrowser.open(fichier + '.html')
     webbrowser.open(filename)  # open_new_tab
 
 
 def ok():
-    # print("Basemap: ", var1.get())
-    print("Espèce 1: ", var1.get())
-    print("Espèce 2: ", var2.get())
+    variable = var.get()
+    if variable == 1:
+        tax = "species"
+        print("Taxonomie souhaité: ", tax)
+        print("Espèce 1: ", varesp1.get())
+        print("Espèce 2: ", varesp2.get())
+        espece1 = varesp1.get()
+        espece2 = varesp2.get()
+
+    elif variable == 2:
+        tax = "genus"
+        print("Taxonomie souhaité: ", tax)
+        print("Genre: ", varge.get())
+        espece1 = varge.get()
+        espece2 = 'Pas d\'autre espèce'
+    elif variable == 3:
+        tax = "family"
+        print("Taxonomie souhaité: ", tax)
+        print("Famille: ", varfam.get())
+        espece1 = varfam.get()
+        espece2 = 'Pas d\'autre espèce'
+    elif variable == 4:
+        tax = "order"
+        print("Taxonomie souhaité: ", tax)
+        print("Ordre: ", varor.get())
+        espece1 = varor.get()
+        espece2 = 'Pas d\'autre espèce'
+    elif variable == 5:
+        tax = "class"
+        print("Taxonomie souhaité: ", tax)
+        print("Classe: ", varclass.get())
+        espece1 = varclass.get()
+        espece2 = 'Pas d\'autre espèce'
+    elif variable == 6:
+        tax = "phylum"
+        print("Taxonomie souhaité: ", tax)
+        print("Embranchement: ", varphy.get())
+        espece1 = varphy.get()
+        espece2 = 'Pas d\'autre espèce'
+    else:
+        tax = "kingdom"
+        print("Taxonomie souhaité: ", tax)
+        print("Règne: ", varkig.get())
+        espece1 = varkig.get()
+        espece2 = 'Pas d\'autre espèce'
     # print("Province: ", var2.get())
     print("Année de début: ", userAnnee1.get())
     print("Année de fin: ", userAnnee2.get())
@@ -270,43 +369,20 @@ def ok():
     else:
         print("Demande de groupement : NON")
     # base = var1.get()
-    espece1 = var1.get()
-    espece2 = var2.get()
+
     # province = var2.get()
     annee1 = userAnnee1.get()
     annee2 = userAnnee2.get()
     groupe = cb.get()
     fichier = nomFichier.get()
     new_df = df[
-        ['species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude', 'numberObservation']].copy()
-    '''if province == "West Flanders":
-        code = "30000"
-    elif province == "Flemish Brabant":
-        code = "20001"
-    elif province == "East Flanders":
-        code = "40000"
-    elif province == "Namur":
-        code = "90000"
-    elif province == "Liège":
-        code = "60000"
-    elif province == "Hainaut":
-        code = "50000"
-    elif province == "Luxembourg":
-        code = "80000"
-    elif province == "Walloon Brabant":
-        code = "20002"
-    elif province == "Limburg":
-        code = "70000"
-    elif province == "Antwerp":
-        code = "10000"
-    else:
-        code = "00000"'''
-    # makeMap(new_df, espece, code, annee1, annee2, groupe, fichier)
-    makeMap(new_df, espece1, espece2, annee1, annee2, groupe, fichier)
+        ['kingdom', 'phylum', 'class', 'order', 'family', 'genus','species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude', 'numberObservation']].copy()
+
+    makeMap(new_df,tax, espece1, espece2, annee1, annee2, groupe, fichier)
 
 
 button = Button(master, text="OK", command=ok)
-button.grid(row=6, column=0)
+button.grid(row=7, column=0)
 
 master.mainloop()
 
