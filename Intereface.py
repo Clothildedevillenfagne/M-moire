@@ -1,17 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Animal evolution in Belgium
-
-# #### <br> Visualize the data base
-
 # In[]:
 import pandas as pd
 import warnings
-import requests
-import zipfile
-import io
-import geopandas as gpd
 from tkinter import *
 import folium
 from folium import FeatureGroup
@@ -23,33 +15,24 @@ import os
 warnings.filterwarnings("ignore")
 
 # In[]:
-df = pd.read_csv(r'./data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
+df = pd.read_csv(
+    r'./data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
 # In[1]:
 
 ''' Ce programme peut seulement faire une carte avec les donner fournie par natagora et NatuurPunt
-    Makes a HTML document in the same directory as this script 
+    Fait un document HTML dans le même dossier que le script script 
 '''
 provList = ["West Flanders", "Flemish Brabant", "East Flanders", "Namur", "Liège", "Hainaut",
             "Luxembourg", "Walloon Brabant", "Limburg", "Antwerp", "Brussels Capital Region"]
 
-basemaps = ["OpenStreetMap", "MapQuest Open", "MapQuest Open Aerial",
-            "Mapbox Bright", "Mapbox Control Room", "CartoDB dark_matter",
-            "CartoDB positron", "Stamen Terrain", "Stamen Toner",
-            "Stamen Watercolor"]
+colors = ['red', 'blue', 'gray', 'darkred', 'orange', 'beige', 'green', 'darkgreen',
+          'lightgreen', 'darkblue', 'lightblue', 'purple', 'pink', 'cadetblue',
+          'lightgray', 'black'] #'lightred','darkpurple' couleur qui ne fonctionne pas
 
-colors = ['red', 'blue', 'gray', 'darkred', 'lightred', 'orange', 'beige', 'green', 'darkgreen',
-          'lightgreen', 'darkblue', 'lightblue', 'purple', 'darkpurple', 'pink', 'cadetblue',
-          'lightgray', 'black']
+green_bleu = ['lightgreen', 'green', 'darkgreen', 'lightblue', 'cadetblue', 'blue', 'darkblue']
 
-green_bleu = ['lightgreen', 'green', 'darkgreen', 'lightblue', 'cadetblue', 'blue', 'darkblue', 'lightgray', 'gray',
-              'black']
-
-purple_red = ['beige', 'orange', 'purple', 'darkpurple', 'pink', 'lightred', 'red', 'darkred']
-
-bleu = ['#191970', '#000080', '#00008B', '#0000CD', '#0000FF', '#00FFFF', '#00FFFF', '#E0FFFF', '#AFEEEE', '#7FFFD4',
-        '#40E0D0', '#48D1CC', '#00CED1', '#5F9EA0', '#4682B4', '#B0C4DE', '#B0E0E6', '#ADD8E6', '#87CEEB', '#87CEFA',
-        '#00BFFF', '#1E90FF', '#6495ED', '#7B68EE', '#4169E1']
+purple_red = ['orange','pink', 'purple', 'red', 'darkred', 'black', 'lightgray', 'gray'] #'beige' pas très visible
 
 list_espece1 = sorted(set(df['species'].tolist()))
 
@@ -58,7 +41,6 @@ list_espece2 = ['Pas d\'autre espèce'] + list_espece1
 list_kig = sorted(set(df['kingdom'].tolist()))
 
 list_phy = sorted(set(df['phylum'].tolist()))
-#list_phy = [x for x in list_phy if pd.isnull(x) == False]
 
 list_class = set(df['class'].tolist())
 list_class = [x for x in list_class if pd.isnull(x) == False]
@@ -79,13 +61,7 @@ list_ge = sorted(list_ge)
 master = Tk()
 
 master.title("Outil de visualisation")
-
-# Label(master, text="Choisissez une carte").grid(row=0)
 Label(master, text= "Précision de la taxonomie souhaité (seul le rang séléctionné sera pris en compte)").grid(row=0)
-#Label(master, text="Nom de l'espèce").grid(row=2)
-#Label(master, text="Nom de l'espèce 2").grid(row=3)
-#Label(master, text="Seul le nom sientifique des espèce est attendu").grid(row=0, column=2)
-# Label(master, text="Province").grid(row=2)
 Label(master, text="Année").grid(row=4)
 Label(master, text="à").grid(row=4, column=2)
 Label(master, text="Avec groupement ?").grid(row=5)
@@ -103,12 +79,12 @@ ge = Radiobutton(master, text="Genre", variable=var, value=2).grid(row=1, column
 esp = Radiobutton(master, text="Espèce", variable=var, value=1).grid(row=1, column=6)
 
 varesp1 = StringVar(master)
-varesp1.set(list_espece1[0])  # initial value
+varesp1.set(list_espece1[0])  # initial value('Carex caryophyllea')
 userespece = OptionMenu(master, varesp1, *list_espece1)
 userespece.grid(row=2, column=6)
 
 varesp2 = StringVar(master)
-varesp2.set(list_espece2[0])
+varesp2.set(list_espece2[0])#('Delichon urbicum')
 userespece2 = OptionMenu(master, varesp2, *list_espece2)
 userespece2.grid(row=3, column=6)
 
@@ -163,12 +139,17 @@ def makeMapGroupement (df_final, map, espece,  annee1, annee2, color):
     year = df_final['year'].tolist()
 
     annee = int(annee1)
-    lgd_txt = '<span style="color: {col};">{txt}</span>'
+    lgd_txt = '<span style="color:{col};">{txt}</span>'
     dico_feature = {}
     dico_cluster = {}
     while annee <= int(annee2):
-        dif = (annee - int(annee1)) % len(color)
-        col = color[dif]
+        col = color[5]
+        if int(annee2) - int(annee1) == 0:
+            col = color[5]
+        else:
+            dif = (annee - int(annee1)) % len(color)
+            col = color[dif]
+
         dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt= str(annee) + ' ' + espece, col=col))
         dico_cluster[annee] = MarkerCluster().add_to(dico_feature[annee])
         # dico_feature[annee].add_to(marker_cluster)
@@ -177,7 +158,7 @@ def makeMapGroupement (df_final, map, espece,  annee1, annee2, color):
 
     for i in range(len(latitude)):
         if int(annee2) - int(annee1) == 0:
-            col = 'blue'
+            col = color[5]
         else:
             dif = (year[i] - int(annee1)) % len(color)
             col = color[dif]
@@ -189,13 +170,13 @@ def makeMapGroupement (df_final, map, espece,  annee1, annee2, color):
             dico_cluster[year[i]])  # marker_cluster)
     annee = int(annee1)
 
-    while annee > int(annee2):
+    while annee <= int(annee2):
         map.add_child(dico_feature[annee])
         annee += 1
 
     return map
 
-def makeMapNonGroup(df_final, map, espece, annee1, annee2, color):
+def makeMapNonGroup(df_final, map, espece, annee1, annee2, color, last):
     longitude = df_final['decimalLongitude'].tolist()
     latitude = df_final['decimalLatitude'].tolist()
     individualCount = df_final['individualCount'].tolist()
@@ -206,15 +187,21 @@ def makeMapNonGroup(df_final, map, espece, annee1, annee2, color):
     lgd_txt = '<span style="color: {col};">{txt}</span>'
     dico_feature = {}
     while annee <= int(annee2):
-        dif = (annee - int(annee1)) % len(color)
-        col = color[dif]
+
+        if int(annee2) - int(annee1) == 0:
+            col = color[5]
+        else:
+            dif = (annee - int(annee1)) % len(color)
+            col = color[dif]
         dico_feature[annee] = FeatureGroup(name=lgd_txt.format(txt=str(annee)+' '+espece, col=col))
+        #map.add_child(dico_feature[annee])
         dico_feature[annee].add_to(map)
         annee += 1
 
+
     for i in range(len(latitude)):
         if int(annee2) - int(annee1) == 0:
-            col = 'blue'
+            col = color[5]
         else:
             dif = (year[i] - int(annee1)) % len(color)
             col = color[dif]
@@ -230,15 +217,13 @@ def makeMapNonGroup(df_final, map, espece, annee1, annee2, color):
                             color=col, fill=False).add_to(dico_feature[year[i]])  # '#3186cc'
 
     annee = int(annee1)
-    while annee > int(annee2):
-        # dico_feature[annee].add_to(mappy)
-        map.add_child(dico_feature[annee])
+    while annee <= int(annee2):
+        dico_feature[annee].add_to(map)
+        #map.add_child(dico_feature[annee])
         annee += 1
 
+
     return map
-
-
-
 
 def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, fichier):  # code_prov,
     if tax == "species":
@@ -254,7 +239,6 @@ def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, fichier):  # code_
             df_min2 = df2[min2]
             max2 = df_min2['year'] <= int(annee2)
             df_final2 = df_min2[max2]
-
     else:
         df1 = df[df[tax] == str(espece1)].copy()
         min = df1['year'] >= int(annee1)
@@ -284,7 +268,7 @@ def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, fichier):  # code_
 
     loc = [4.35, 50.8333]
 
-    mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=10)  # tiles=basemap,
+    mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=8)  # tiles=basemap,
 
     folium.TileLayer('openstreetmap').add_to(mappy)
     folium.TileLayer('Stamen Terrain').add_to(mappy)
@@ -303,10 +287,10 @@ def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, fichier):  # code_
 
     else:
 
-        mappy = makeMapNonGroup(df_final1, mappy, espece1, annee1, annee2, green_bleu)
+        mappy = makeMapNonGroup(df_final1, mappy, espece1, annee1, annee2, green_bleu, 0)
 
         if espece2 != 'Pas d\'autre espèce':
-            mappy = makeMapNonGroup(df_final2, mappy, espece2, annee1, annee2, purple_red)
+            mappy = makeMapNonGroup(df_final2, mappy, espece2, annee1, annee2, purple_red, 1)
 
     folium.LayerControl().add_to(mappy)
     mappy.save(fichier + '.html')
@@ -377,7 +361,6 @@ def ok():
     fichier = nomFichier.get()
     new_df = df[
         ['kingdom', 'phylum', 'class', 'order', 'family', 'genus','species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude', 'numberObservation']].copy()
-
     makeMap(new_df,tax, espece1, espece2, annee1, annee2, groupe, fichier)
 
 
