@@ -10,13 +10,16 @@ from folium import FeatureGroup
 import numpy as np
 from folium.plugins import MarkerCluster
 import webbrowser
+from html2image import Html2Image
 import os
+import cv2
+import shutil
 
 warnings.filterwarnings("ignore")
 
 # In[]:
 df = pd.read_csv(
-    r'./data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
+    r'/Users/clothildedevillenfagne/Cours/Master_2/Memoire/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
 # In[1]:
 
@@ -32,7 +35,7 @@ colors = ['red', 'blue', 'gray', 'darkred', 'orange', 'beige', 'green', 'darkgre
 
 green_bleu = ['lightgreen', 'green', 'darkgreen', 'lightblue', 'cadetblue', 'blue', 'darkblue']
 
-purple_red = ['orange','pink', 'purple', 'red', 'darkred', 'black', 'lightgray', 'gray'] #'beige' pas très visible
+purple_red = ['lightgray', 'gray', 'orange','pink', 'purple', 'red', 'darkred', 'black'] #'beige' pas très visible
 
 list_espece1 = sorted(set(df['species'].tolist()))
 
@@ -65,7 +68,8 @@ Label(master, text= "Précision de la taxonomie souhaité (seul le rang séléct
 Label(master, text="Année").grid(row=4)
 Label(master, text="à").grid(row=4, column=2)
 Label(master, text="Avec groupement ?").grid(row=5)
-Label(master, text="Nom de la carte enregistée").grid(row=6)
+Label(master, text="Dynamique").grid(row=6)
+Label(master, text="Nom de la carte enregistée").grid(row=7)
 
 
 var = IntVar()
@@ -79,12 +83,12 @@ ge = Radiobutton(master, text="Genre", variable=var, value=2).grid(row=1, column
 esp = Radiobutton(master, text="Espèce", variable=var, value=1).grid(row=1, column=6)
 
 varesp1 = StringVar(master)
-varesp1.set(list_espece1[0])  # initial value('Carex caryophyllea')
+varesp1.set('Chroicocephalus ridibundus')#('Alopochen aegyptiaca')#(list_espece1[0])  # initial value('Carex caryophyllea')
 userespece = OptionMenu(master, varesp1, *list_espece1)
 userespece.grid(row=2, column=6)
 
 varesp2 = StringVar(master)
-varesp2.set(list_espece2[0])#('Delichon urbicum')
+varesp2.set('Anas platyrhynchos')#(list_espece2[0])#
 userespece2 = OptionMenu(master, varesp2, *list_espece2)
 userespece2.grid(row=3, column=6)
 
@@ -128,8 +132,11 @@ userAnnee2.grid(row=4, column=3)
 cb = IntVar()
 Checkbutton(master, variable=cb, onvalue=1, offvalue=0).grid(row=5, column=1)
 
+dyn = IntVar()
+Checkbutton(master, variable=dyn, onvalue=1, offvalue=0).grid(row=6, column=1)
+
 nomFichier = Entry(master)
-nomFichier.grid(row=6, column=1)
+nomFichier.grid(row=7, column=1)
 
 def makeMapGroupement (df_final, map, espece,  annee1, annee2, color):
 
@@ -176,7 +183,7 @@ def makeMapGroupement (df_final, map, espece,  annee1, annee2, color):
 
     return map
 
-def makeMapNonGroup(df_final, map, espece, annee1, annee2, color, last):
+def makeMapNonGroup(df_final, map, espece, annee1, annee2, color):
     longitude = df_final['decimalLongitude'].tolist()
     latitude = df_final['decimalLatitude'].tolist()
     individualCount = df_final['individualCount'].tolist()
@@ -206,7 +213,11 @@ def makeMapNonGroup(df_final, map, espece, annee1, annee2, color, last):
             dif = (year[i] - int(annee1)) % len(color)
             col = color[dif]
 
-        folium.CircleMarker(location=(latitude[i], longitude[i]), radius=np.log(num_obs[i]),
+        rayon = 2 * np.log2(num_obs[i])
+        if rayon == 0:
+            rayon = 0.5
+
+        folium.CircleMarker(location=(latitude[i], longitude[i]), radius=rayon,
                             popup="""
                                      <i>Nombre d'individue compté: </i><b><br>{}</b><br>
                                      <i>Année de l'observation: </i><b><br>{}</b><br>
@@ -225,7 +236,85 @@ def makeMapNonGroup(df_final, map, espece, annee1, annee2, color, last):
 
     return map
 
-def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, fichier):  # code_prov,
+def dynam(df1, df2, fichier, groupement):
+    year = set(df1['year'].tolist())
+    for annee in year:
+        new_df = df1[df1['year']==annee]
+        col = 'blue'
+        longitude = new_df['decimalLongitude'].tolist()
+        latitude = new_df['decimalLatitude'].tolist()
+        num_obs = new_df['numberObservation'].tolist()
+        loc = [4.35, 50.8333]
+
+        mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=8, tiles='openstreetmap')  # tiles=basemap
+
+        if groupement == 1:
+            marker_cluster = MarkerCluster().add_to(mappy)
+
+
+        for i in range(len(latitude)):
+            if groupement == 0:
+                rayon = 2 * np.log2(num_obs[i])
+                if rayon == 0:
+                    rayon = 0.5
+                folium.CircleMarker(location=(latitude[i], longitude[i]), radius=rayon,  # line_color=col,
+                                    color=col, fill=False).add_to(mappy)
+            else:
+                folium.Marker(location=(latitude[i], longitude[i]), icon=folium.Icon(color=col, icon='fa-circle', prefix='fa')).add_to(marker_cluster)
+
+        if df2.empty == False:
+            new_df2 = df2[df2['year'] == annee]
+            col2 = 'red'
+            longitude2 = new_df2['decimalLongitude'].tolist()
+            latitude2 = new_df2['decimalLatitude'].tolist()
+            num_obs2 = new_df2['numberObservation'].tolist()
+            #loc = [4.35, 50.8333]
+
+            #mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=8, tiles='openstreetmap')  # tiles=basemap
+
+            for i in range(len(latitude2)):
+                if groupement == 0:
+                    rayon = 2 * np.log2(num_obs2[i])
+                    if rayon == 0:
+                        rayon = 0.5
+                    folium.CircleMarker(location=(latitude2[i], longitude2[i]), radius=rayon,  # line_color=col,
+                                        color=col2, fill=False).add_to(mappy)
+                else:
+                    folium.Marker(location=(latitude2[i], longitude2[i]),
+                                  icon=folium.Icon(color=col2, icon='fa-circle', prefix='fa')).add_to(marker_cluster)
+
+        if not os.path.exists('./images'):
+            os.makedirs('./images')
+
+        mappy.save('./images/html_file.html')
+        #filename = 'file:///' + os.getcwd() + '/' + 'images/html_file.html'
+        #webbrowser.open(filename)
+
+        hti = Html2Image()
+        with open('./images/html_file.html') as f:
+            hti.output_path = 'images'
+            hti.screenshot(f.read(), save_as= str(annee)+'.png')
+
+    image_folder = 'images'
+    video_name = fichier + '.avi'
+
+    images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
+    images = sorted(images)
+    frame = cv2.imread(os.path.join(image_folder, images[0]))
+    height, width, layers = frame.shape
+
+    video = cv2.VideoWriter(video_name, 0, 1, (width, height))
+
+    for image in images:
+        video.write(cv2.imread(os.path.join(image_folder, image)))
+
+    cv2.destroyAllWindows()
+    video.release()
+    shutil.rmtree('images')
+
+
+
+def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, dynamique, fichier):  # code_prov,
     if tax == "species":
         df1 = df[df.species == str(espece1)].copy()  # select the species
         min = df1['year'] >= int(annee1)
@@ -266,36 +355,43 @@ def makeMap(df,tax, espece1, espece2, annee1, annee2, groupe, fichier):  # code_
             df_final1 = pd.DataFrame(ar, columns=['individualCount', 'decimalLatitude',
                                                 'decimalLongitude', 'year', 'numberObservation'])
 
-    loc = [4.35, 50.8333]
-
-    mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=8)  # tiles=basemap,
-
-    folium.TileLayer('openstreetmap').add_to(mappy)
-    folium.TileLayer('Stamen Terrain').add_to(mappy)
-    folium.TileLayer('Stamen Toner').add_to(mappy)
-    folium.TileLayer('Stamen Watercolor').add_to(mappy)
-    folium.TileLayer('CartoDB positron').add_to(mappy)
-    folium.TileLayer('CartoDB dark_matter').add_to(mappy)
-
-    if groupe == 1:
-
-        mappy = makeMapGroupement(df_final1,mappy, espece1, annee1, annee2, green_bleu)
-
+    if dynamique == 1:
         if espece2 != 'Pas d\'autre espèce':
-            mappy = makeMapGroupement(df_final2, mappy, espece2, annee1, annee2, purple_red)
-
+            dynam(df_final1, df_final2, fichier, groupe)
+        else:
+            df_empty = pd.DataFrame({'A': []})
+            dynam(df_final1, df_empty, fichier, groupe)
 
     else:
+        loc = [4.35, 50.8333]
 
-        mappy = makeMapNonGroup(df_final1, mappy, espece1, annee1, annee2, green_bleu, 0)
+        mappy = folium.Map(location=[loc[1], loc[0]], zoom_start=8)  # tiles=basemap,
 
-        if espece2 != 'Pas d\'autre espèce':
-            mappy = makeMapNonGroup(df_final2, mappy, espece2, annee1, annee2, purple_red, 1)
+        folium.TileLayer('openstreetmap').add_to(mappy)
+        folium.TileLayer('Stamen Terrain').add_to(mappy)
+        folium.TileLayer('Stamen Toner').add_to(mappy)
+        folium.TileLayer('Stamen Watercolor').add_to(mappy)
+        folium.TileLayer('CartoDB positron').add_to(mappy)
+        folium.TileLayer('CartoDB dark_matter').add_to(mappy)
+        if groupe == 1:
 
-    folium.LayerControl().add_to(mappy)
-    mappy.save(fichier + '.html')
-    filename = 'file:///' + os.getcwd() + '/' + fichier + '.html'
-    webbrowser.open(filename)  # open_new_tab
+            mappy = makeMapGroupement(df_final1,mappy, espece1, annee1, annee2, green_bleu)
+
+            if espece2 != 'Pas d\'autre espèce':
+                mappy = makeMapGroupement(df_final2, mappy, espece2, annee1, annee2, purple_red)
+
+
+        else:
+
+            mappy = makeMapNonGroup(df_final1, mappy, espece1, annee1, annee2, green_bleu)
+
+            if espece2 != 'Pas d\'autre espèce':
+                mappy = makeMapNonGroup(df_final2, mappy, espece2, annee1, annee2, purple_red)
+
+        folium.LayerControl().add_to(mappy)
+        mappy.save(fichier + '.html')
+        filename = 'file:///' + os.getcwd() + '/' + fichier + '.html'
+        webbrowser.open(filename)  # open_new_tab
 
 
 def ok():
@@ -352,21 +448,26 @@ def ok():
         print("Demande de groupement : OUI")
     else:
         print("Demande de groupement : NON")
+
+    if dyn.get() == 1:
+        print("Dynamique : OUI")
+    else:
+        print("Dynamique : NON")
     # base = var1.get()
 
     # province = var2.get()
     annee1 = userAnnee1.get()
     annee2 = userAnnee2.get()
     groupe = cb.get()
+    dynamique = dyn.get()
     fichier = nomFichier.get()
     new_df = df[
         ['kingdom', 'phylum', 'class', 'order', 'family', 'genus','species', 'individualCount', 'year', 'decimalLatitude', 'decimalLongitude', 'numberObservation']].copy()
-    makeMap(new_df,tax, espece1, espece2, annee1, annee2, groupe, fichier)
+    makeMap(new_df,tax, espece1, espece2, annee1, annee2, groupe, dynamique, fichier)
 
 
 button = Button(master, text="OK", command=ok)
-button.grid(row=7, column=0)
+button.grid(row=8, column=0)
 
 master.mainloop()
 
-# Delichon urbicum
