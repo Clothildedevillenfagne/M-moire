@@ -3,8 +3,8 @@
 Afin d'obtenir une meilleure visualisation dans l'espace de nos données, une interface interactive a été créée dans le but de visualiser celles-ci, notamment sur différentes cartes. Pour démontrer cela, le chapitre suivant est découpé en deux grandes parties. D'une part la préparation des données et d'autre part la structure et le fonctionnement de l'interface et des cartes. 
 
 ## Traitement des données
-Ayant des données d'origines assez volumineuses et pour gagner un maximum de temps à l'exécution, nous devons les réduire. \\
-\\
+Ayant des données d'origines assez volumineuses et pour gagner un maximum de temps à l'exécution, nous devons les réduire. 
+
 Étant donné que nous allons créer un outil graphique, il n'y a aucune raison de faire une sélection dans les données, toutes les observations seront prises en compte. La première étape est d'uniquement prendre les colonnes qui nous intéressent, dans notre cas les colonnes:
 \begin{itemize}
     \item Pour la taxonomie : kingdom, phylum, class, order, family, genus, species
@@ -16,12 +16,25 @@ Ayant des données d'origines assez volumineuses et pour gagner un maximum de te
 Ici, notre travail est de regrouper toutes les observations d'une même espèce à un endroit particulier au cours d'une année et par la suite, on va pouvoir les projeter sur l'interface.
 Pour ce faire, nous allons créer un nouveau paramètre, \textit{num\_obs} qui sera le nombre d'observations faites au cours de l'année en question. En ce qui concerne le paramètre \textit{individualCount}, nous faisons la somme de l'ensemble des élément concernés. Cela nous permet de réduire notre base de données de  22 563 396 d'observations à 5 196 751. Cela est possible car nous avons remarqué que dans la base de données, les coordonnées géographiques étaient reprises dans un quadrillage, ce quadrillage reste assez précis.
 
-## Taxonomie
+## Structure de l'interface
+Pour réaliser cette interface nous allons utiliser tkinter qui est un package de python. Cette dernière va se constituer de quatre parties. Chacune va consister en un choix qui va se répercuter sur notre carte finale.
+
+![alt text](https://github.com/Clothildedevillenfagne/Memoire_analyse_biodiversite_belgique/blob/main/Interface/image/interface.png)
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{interface.png}
+    \caption{première fenêtre de l'interface avec la demande de choix}
+    \label{fig:interface}
+\end{figure}
+
+### Taxonomie
 Si nous regardons sur la figure \ref{fig:interface}, nous voyons que la première demande concerne la taxonomie. Concernant ce sujet-là, un éventail de choix peut être fait. Une fois le niveau de taxonomie choisi, un nouveau panel de choix s'ouvre afin de permettre la sélection d'une espèce. Par exemple, si nous choisissons de nous limiter aux embranchements, il faut par la suite sélectionner l'embranchement que nous souhaitons projeter sur la carte. Lors de la sélection du niveau de taxonomie, la projection fera abstraction des autres choix dans les autres niveaux. Il n'y a qu'une seule spécificité, elle se situe au niveau des espèces. En effet, nous pouvons choisir une ou deux espèces différentes à projeter sur la carte. Celles-ci seront visualisées avec des couleurs différentes.
-## Année
+### Année
 Sur notre interface, nous avons la possibilité de choisir un intervalle d'années. Sachant que les années sélectionnées sont inclues dans la sélection. 
 
-## Groupement
+### Groupement
 La fonction groupement sert, comme son nom l'indique, à grouper des observations qui sont proches l'une de l'autre. Prenons les observations d'hirondelles (Delichon urbicum) en 2015 pour illustrer cela. 
 \begin{figure*}[h]
     \centering
@@ -42,8 +55,8 @@ La fonction groupement sert, comme son nom l'indique, à grouper des observation
 
 Avec l'option groupement, nous pouvons cliquer sur une zone et nous allons tout de suite avoir un zoom sur celle-ci. Si nous zoomons par nous-mêmes, les bulles avec le nombre d'observations vont se multiplier en plus petites bulles.
 
-## Dynamique
-### Désactivé
+### Dynamique
+#### Désactivé
 \begin{itemize}
     \item \textbf{Nom} : La dernière option à choisir est le nom que nous voulons donner à notre carte. Effectivement, l'interface va générer une carte en html, celle-ci va être enregistrée à l'endroit souhaité ou par défaut, là où le code se situe. Après avoir appuyé sur \textit{Ok}, la carte va s'ouvrir d'elle même dans un navigateur. 
     \item \textbf{Carte} : Quelques informations supplémentaires concernant la carte, il y a une fonctionnalité de zoom, de dézoom. De plus, nous pouvons nous déplacer dans l'espace. 
@@ -60,7 +73,7 @@ Enfin, le dernier choix que nous avons fait pour la carte concerne les cartes qu
 \end{itemize}
 
 
-### Activé
+#### Activé
 Le principe de cette option va être de pouvoir observer un mouvement d'évolution des observations au niveau du temps. Pour cela, nous allons générer une vidéo qui va montrer cette évolution sur une période de temps défini. 
 \begin{itemize}
     \item \textbf{Nom} : c'est le même principe lorsque l'option dynamique n'est pas activée. Cependant, ici, ce sera le nom de la vidéo.
