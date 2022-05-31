@@ -1,11 +1,11 @@
 ### Interface grapique
 
-\subsection{Taxonomie}
+## Taxonomie
 Si nous regardons sur la figure \ref{fig:interface}, nous voyons que la première demande concerne la taxonomie. Concernant ce sujet-là, un éventail de choix peut être fait. Une fois le niveau de taxonomie choisi, un nouveau panel de choix s'ouvre afin de permettre la sélection d'une espèce. Par exemple, si nous choisissons de nous limiter aux embranchements, il faut par la suite sélectionner l'embranchement que nous souhaitons projeter sur la carte. Lors de la sélection du niveau de taxonomie, la projection fera abstraction des autres choix dans les autres niveaux. Il n'y a qu'une seule spécificité, elle se situe au niveau des espèces. En effet, nous pouvons choisir une ou deux espèces différentes à projeter sur la carte. Celles-ci seront visualisées avec des couleurs différentes.
-\subsection{Année}
+## Année
 Sur notre interface, nous avons la possibilité de choisir un intervalle d'années. Sachant que les années sélectionnées sont inclues dans la sélection. 
 
-\subsection{Groupement}
+## Groupement
 La fonction groupement sert, comme son nom l'indique, à grouper des observations qui sont proches l'une de l'autre. Prenons les observations d'hirondelles (Delichon urbicum) en 2015 pour illustrer cela. 
 \begin{figure*}[h]
     \centering
@@ -26,8 +26,8 @@ La fonction groupement sert, comme son nom l'indique, à grouper des observation
 
 Avec l'option groupement, nous pouvons cliquer sur une zone et nous allons tout de suite avoir un zoom sur celle-ci. Si nous zoomons par nous-mêmes, les bulles avec le nombre d'observations vont se multiplier en plus petites bulles.
 
-\subsection{Dynamique}
-\subsubsection{Désactivé}
+## Dynamique
+# Désactivé
 \begin{itemize}
     \item \textbf{Nom} : La dernière option à choisir est le nom que nous voulons donner à notre carte. Effectivement, l'interface va générer une carte en html, celle-ci va être enregistrée à l'endroit souhaité ou par défaut, là où le code se situe. Après avoir appuyé sur \textit{Ok}, la carte va s'ouvrir d'elle même dans un navigateur. 
     \item \textbf{Carte} : Quelques informations supplémentaires concernant la carte, il y a une fonctionnalité de zoom, de dézoom. De plus, nous pouvons nous déplacer dans l'espace. 
@@ -44,7 +44,7 @@ Enfin, le dernier choix que nous avons fait pour la carte concerne les cartes qu
 \end{itemize}
 
 
-\subsubsection{Activé}
+# Activé
 Le principe de cette option va être de pouvoir observer un mouvement d'évolution des observations au niveau du temps. Pour cela, nous allons générer une vidéo qui va montrer cette évolution sur une période de temps défini. 
 \begin{itemize}
     \item \textbf{Nom} : c'est le même principe lorsque l'option dynamique n'est pas activée. Cependant, ici, ce sera le nom de la vidéo.
@@ -55,7 +55,7 @@ Le principe de cette option va être de pouvoir observer un mouvement d'évoluti
 Grâce à cette option, nous pouvons être témoin si une espèce se déplace, d'années en années, sur le territoire, ou encore si une espèce augmente la taille de son territoire dans le temps.
 
 
-\subsection{Implémentation}
+## Implémentation
 Cette interface a été implémentée en Python 3.9 et a fait appel à différentes librairies :
 
 \begin{itemize}
