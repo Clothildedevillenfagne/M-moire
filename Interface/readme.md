@@ -1,5 +1,21 @@
 # Interface grapique
 
+Afin d'obtenir une meilleure visualisation dans l'espace de nos données, une interface interactive a été créée dans le but de visualiser celles-ci, notamment sur différentes cartes. Pour démontrer cela, le chapitre suivant est découpé en deux grandes parties. D'une part la préparation des données et d'autre part la structure et le fonctionnement de l'interface et des cartes. 
+
+## Traitement des données
+Ayant des données d'origines assez volumineuses et pour gagner un maximum de temps à l'exécution, nous devons les réduire. \\
+\\
+Étant donné que nous allons créer un outil graphique, il n'y a aucune raison de faire une sélection dans les données, toutes les observations seront prises en compte. La première étape est d'uniquement prendre les colonnes qui nous intéressent, dans notre cas les colonnes:
+\begin{itemize}
+    \item Pour la taxonomie : kingdom, phylum, class, order, family, genus, species
+    \item Pour la localisation : decimalLatitude, decimalLongitude
+    \item Pour la représentation temporel : year
+    \item Pour le nombre d'espèces : individualCount
+\end{itemize}
+
+Ici, notre travail est de regrouper toutes les observations d'une même espèce à un endroit particulier au cours d'une année et par la suite, on va pouvoir les projeter sur l'interface.
+Pour ce faire, nous allons créer un nouveau paramètre, \textit{num\_obs} qui sera le nombre d'observations faites au cours de l'année en question. En ce qui concerne le paramètre \textit{individualCount}, nous faisons la somme de l'ensemble des élément concernés. Cela nous permet de réduire notre base de données de  22 563 396 d'observations à 5 196 751. Cela est possible car nous avons remarqué que dans la base de données, les coordonnées géographiques étaient reprises dans un quadrillage, ce quadrillage reste assez précis.
+
 ## Taxonomie
 Si nous regardons sur la figure \ref{fig:interface}, nous voyons que la première demande concerne la taxonomie. Concernant ce sujet-là, un éventail de choix peut être fait. Une fois le niveau de taxonomie choisi, un nouveau panel de choix s'ouvre afin de permettre la sélection d'une espèce. Par exemple, si nous choisissons de nous limiter aux embranchements, il faut par la suite sélectionner l'embranchement que nous souhaitons projeter sur la carte. Lors de la sélection du niveau de taxonomie, la projection fera abstraction des autres choix dans les autres niveaux. Il n'y a qu'une seule spécificité, elle se situe au niveau des espèces. En effet, nous pouvons choisir une ou deux espèces différentes à projeter sur la carte. Celles-ci seront visualisées avec des couleurs différentes.
 ## Année
