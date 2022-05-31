@@ -1,3 +1,5 @@
+### Interface grapique
+
 \subsection{Taxonomie}
 Si nous regardons sur la figure \ref{fig:interface}, nous voyons que la première demande concerne la taxonomie. Concernant ce sujet-là, un éventail de choix peut être fait. Une fois le niveau de taxonomie choisi, un nouveau panel de choix s'ouvre afin de permettre la sélection d'une espèce. Par exemple, si nous choisissons de nous limiter aux embranchements, il faut par la suite sélectionner l'embranchement que nous souhaitons projeter sur la carte. Lors de la sélection du niveau de taxonomie, la projection fera abstraction des autres choix dans les autres niveaux. Il n'y a qu'une seule spécificité, elle se situe au niveau des espèces. En effet, nous pouvons choisir une ou deux espèces différentes à projeter sur la carte. Celles-ci seront visualisées avec des couleurs différentes.
 \subsection{Année}
