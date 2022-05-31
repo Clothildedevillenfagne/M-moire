@@ -21,14 +21,6 @@ Pour réaliser cette interface nous allons utiliser tkinter qui est un package d
 
 ![alt text](https://github.com/Clothildedevillenfagne/Memoire_analyse_biodiversite_belgique/blob/main/Interface/image/interface.png)
 
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{interface.png}
-    \caption{première fenêtre de l'interface avec la demande de choix}
-    \label{fig:interface}
-\end{figure}
-
 ### Taxonomie
 Si nous regardons sur la figure \ref{fig:interface}, nous voyons que la première demande concerne la taxonomie. Concernant ce sujet-là, un éventail de choix peut être fait. Une fois le niveau de taxonomie choisi, un nouveau panel de choix s'ouvre afin de permettre la sélection d'une espèce. Par exemple, si nous choisissons de nous limiter aux embranchements, il faut par la suite sélectionner l'embranchement que nous souhaitons projeter sur la carte. Lors de la sélection du niveau de taxonomie, la projection fera abstraction des autres choix dans les autres niveaux. Il n'y a qu'une seule spécificité, elle se situe au niveau des espèces. En effet, nous pouvons choisir une ou deux espèces différentes à projeter sur la carte. Celles-ci seront visualisées avec des couleurs différentes.
 ### Année
@@ -36,22 +28,12 @@ Sur notre interface, nous avons la possibilité de choisir un intervalle d'anné
 
 ### Groupement
 La fonction groupement sert, comme son nom l'indique, à grouper des observations qui sont proches l'une de l'autre. Prenons les observations d'hirondelles (Delichon urbicum) en 2015 pour illustrer cela. 
-\begin{figure*}[h]
-    \centering
-    \begin{subfigure}[b]{0.475\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{hirondelle_non_groupe.png}  
-        \caption{Sans l'option groupement}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.475\textwidth}  
-        \centering 
-        \includegraphics[width=\textwidth]{hirondelle_groupe.png}
-        \caption{Avec l'option groupement}
-    \end{subfigure}
-    \caption{Effet de l'option groupement sur la carte}
-    \label{fig:graphique}
-\end{figure*}
+
+Sans groupement : 
+![alt text](https://github.com/Clothildedevillenfagne/Memoire_analyse_biodiversite_belgique/blob/main/Interface/image/hirondelle_non_groupe.png)
+
+Avec groupement : 
+![alt text](https://github.com/Clothildedevillenfagne/Memoire_analyse_biodiversite_belgique/blob/main/Interface/image/hirondelle_groupe.png)
 
 Avec l'option groupement, nous pouvons cliquer sur une zone et nous allons tout de suite avoir un zoom sur celle-ci. Si nous zoomons par nous-mêmes, les bulles avec le nombre d'observations vont se multiplier en plus petites bulles.
 
@@ -60,12 +42,8 @@ Avec l'option groupement, nous pouvons cliquer sur une zone et nous allons tout 
 \begin{itemize}
     \item \textbf{Nom} : La dernière option à choisir est le nom que nous voulons donner à notre carte. Effectivement, l'interface va générer une carte en html, celle-ci va être enregistrée à l'endroit souhaité ou par défaut, là où le code se situe. Après avoir appuyé sur \textit{Ok}, la carte va s'ouvrir d'elle même dans un navigateur. 
     \item \textbf{Carte} : Quelques informations supplémentaires concernant la carte, il y a une fonctionnalité de zoom, de dézoom. De plus, nous pouvons nous déplacer dans l'espace. 
-\begin{figure}[H]
-    \centering
-    \includegraphics[height=5cm, width=4cm]{legende.png}
-    \caption{Fonctionnalité de notre carte}
-    \label{fig:legende}
-\end{figure}
+
+![alt text](https://github.com/Clothildedevillenfagne/Memoire_analyse_biodiversite_belgique/blob/main/Interface/image/legende.png)
 
 Nous avons aussi différentes cartes possibles qui peuvent être changées au moment de l'analyse. Par défaut, c'est le fond de carte openstreetmap qui va être sélectionné au moment de l'ouverture. Toujours dans ce panel d'options, si nous avons décidé de mettre plusieurs années ou même plusieurs espèces sur la carte, nous pouvons cocher ou décocher les années pour chaque espèce afin d'enlever ou ajouter les données intéressantes. Chaque année de l'interval choisi correspondra à une couleur sur la carte pour une meilleure visibilité.\\
 \\
