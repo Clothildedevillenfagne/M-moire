@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 
 # In[]:
 df = pd.read_csv(
-    r'/Users/clothildedevillenfagne/Cours/Master_2/Memoire/data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
+    r'./data_reduite_obs.csv')  # moyen_data.csv, sep="\t"
 
 # In[1]:
 
